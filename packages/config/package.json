@@ -1,0 +1,15 @@
+{
+  "name": "@remotfix/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.react.json": "./tsconfig.react.json",
+    "./tsconfig.nest.json": "./tsconfig.nest.json"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.react.json",
+    "tsconfig.nest.json"
+  ]
+}

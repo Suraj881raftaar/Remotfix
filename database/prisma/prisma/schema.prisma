@@ -1,0 +1,22 @@
+// REMOTFIX — Prisma Foundation (M1 Infrastructure Only)
+// Note: DO NOT declare domain/business models (User, Booking, Organization, etc.) in M1.
+// Business schema modeling is strictly deferred to Milestone 3.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// Pure infrastructure lock model to satisfy Prisma schema syntax validation
+/// without introducing premature domain/business models.
+model SystemMigrationLock {
+  id        String   @id @default(uuid()) @db.Uuid
+  lockedAt  DateTime @default(now()) @map("locked_at")
+  lockedBy  String   @map("locked_by")
+
+  @@map("system_migration_locks")
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@remotfix/tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo Tests build placeholder",
+    "test": "echo \"Monorepo test harness initialized (M1 foundation)\"",
+    "typecheck": "echo \"Test harness typecheck placeholder\""
+  }
+}

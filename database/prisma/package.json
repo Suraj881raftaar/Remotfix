@@ -1,0 +1,19 @@
+{
+  "name": "@remotfix/database",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"if (!process.env.DATABASE_URL) process.env.DATABASE_URL = 'postgresql://remotfix_user:remotfix_pass@localhost:5432/remotfix_dev?schema=public'; require('child_process').execSync('prisma generate', { stdio: 'inherit', env: process.env });\"",
+    "generate": "node -e \"if (!process.env.DATABASE_URL) process.env.DATABASE_URL = 'postgresql://remotfix_user:remotfix_pass@localhost:5432/remotfix_dev?schema=public'; require('child_process').execSync('prisma generate', { stdio: 'inherit', env: process.env });\"",
+    "validate": "node -e \"if (!process.env.DATABASE_URL) process.env.DATABASE_URL = 'postgresql://remotfix_user:remotfix_pass@localhost:5432/remotfix_dev?schema=public'; require('child_process').execSync('prisma validate', { stdio: 'inherit', env: process.env });\"",
+    "typecheck": "node -e \"if (!process.env.DATABASE_URL) process.env.DATABASE_URL = 'postgresql://remotfix_user:remotfix_pass@localhost:5432/remotfix_dev?schema=public'; require('child_process').execSync('prisma validate', { stdio: 'inherit', env: process.env });\""
+  },
+  "dependencies": {
+    "@prisma/client": "^6.3.1"
+  },
+  "devDependencies": {
+    "@remotfix/config": "workspace:*",
+    "prisma": "^6.3.1",
+    "typescript": "^5.7.3"
+  }
+}
