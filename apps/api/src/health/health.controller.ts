@@ -1,12 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse as SwaggerApiResponse, ApiTags } from '@nestjs/swagger';
 import type { HealthStatus } from '@remotfix/types';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Infrastructure')
 @Controller('health')
 export class HealthController {
   private readonly startTime = Date.now();
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'System liveness and readiness probe' })
   @SwaggerApiResponse({ status: 200, description: 'Service is healthy' })

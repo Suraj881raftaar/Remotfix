@@ -49,15 +49,60 @@ export interface HealthStatus {
 }
 
 /**
- * 6 Initial RBAC Roles mandated by ADR-0020.
+ * 6 Initial RBAC Roles mandated by ADR-0020 and Master Spec Section 2.7.
  */
-export enum UserRole {
-  TENANT_OWNER = 'TENANT_OWNER',
-  TENANT_ADMIN = 'TENANT_ADMIN',
+export enum SystemRole {
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
   TECHNICIAN = 'TECHNICIAN',
+  STAFF = 'STAFF',
   CUSTOMER = 'CUSTOMER',
-  SECURITY_ADMIN = 'SECURITY_ADMIN',
-  SUPPORT_AGENT = 'SUPPORT_AGENT',
+}
+
+
+
+/**
+ * 13 Explicit Permission Keys mandated by Master Spec Section 2.7.
+ */
+export const PERMISSION_KEYS = [
+  'tickets:read',
+  'tickets:create',
+  'tickets:update',
+  'tickets:assign',
+  'users:read',
+  'users:create',
+  'users:update',
+  'billing:read',
+  'billing:create',
+  'billing:approve',
+  'audit:read',
+  'security:manage',
+  'organization:manage',
+] as const;
+
+export type PermissionKey = typeof PERMISSION_KEYS[number];
+
+/**
+ * Authenticated User session payload.
+ */
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  mfaEnabled: boolean;
+}
+
+/**
+ * Active tenant context resolved by TenantGuard.
+ */
+export interface TenantContext {
+  organizationId: string;
+  membershipId: string;
+  roleId: string;
+  roleName: SystemRole | string;
+  permissions: PermissionKey[];
 }
 
 /**
@@ -66,3 +111,4 @@ export enum UserRole {
 export interface TenantedEntity {
   organizationId: string;
 }
+

@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConsoleLogger } from '@remotfix/telemetry';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -10,10 +11,22 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
   });
 
+  // Enable trusted proxy for accurate client IP resolution behind reverse proxies (SEC-08)
+  const httpAdapter = app.getHttpAdapter();
+  if (typeof httpAdapter.getInstance === 'function') {
+    const expressInstance = httpAdapter.getInstance();
+    if (expressInstance && typeof expressInstance.set === 'function') {
+      expressInstance.set('trust proxy', 1);
+    }
+  }
+
+  // Enable cookie parser for secure HTTP-only refresh tokens (D-M4-01)
+  app.use(cookieParser());
+
   // ADR-0010: Base API path must be /api/v1
   app.setGlobalPrefix('api/v1');
 
-  // Enable CORS for local development
+  // Enable CORS for web client
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true,

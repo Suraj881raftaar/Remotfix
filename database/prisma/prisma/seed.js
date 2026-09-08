@@ -1,6 +1,5 @@
-// REMOTFIX — Authoritative RBAC Foundation Seed (M3)
-// Strictly seeds 6 system roles and 13 explicit permission keys.
-// In accordance with Decision 5: role_permissions remains strictly empty.
+// REMOTFIX — Authoritative RBAC Foundation Seed (M4)
+// Seeds the 6 system roles, 13 explicit permission keys, and approved Role-Permission matrix.
 
 const { PrismaClient } = require('@prisma/client');
 
@@ -39,10 +38,66 @@ const EXPLICIT_PERMISSIONS = [
   { key: 'organization:manage', description: 'Modify tenant profile, business details, and operating locations' },
 ];
 
-async function main() {
-  console.log('Seeding authoritative RBAC foundation (M3)...');
+// Approved D-M4-03 RBAC Matrix
+const APPROVED_ROLE_PERMISSIONS = {
+  OWNER: [
+    'tickets:read',
+    'tickets:create',
+    'tickets:update',
+    'tickets:assign',
+    'users:read',
+    'users:create',
+    'users:update',
+    'billing:read',
+    'billing:create',
+    'billing:approve',
+    'audit:read',
+    'security:manage',
+    'organization:manage',
+  ],
+  ADMIN: [
+    'tickets:read',
+    'tickets:create',
+    'tickets:update',
+    'tickets:assign',
+    'users:read',
+    'users:create',
+    'users:update',
+    'billing:read',
+    'billing:create',
+    'billing:approve',
+    'audit:read',
+    'security:manage',
+    'organization:manage',
+  ],
+  MANAGER: [
+    'tickets:read',
+    'tickets:create',
+    'tickets:update',
+    'tickets:assign',
+    'users:read',
+    'billing:read',
+  ],
+  TECHNICIAN: [
+    'tickets:read',
+    'tickets:update',
+  ],
+  STAFF: [
+    'tickets:read',
+    'tickets:create',
+    'tickets:update',
+  ],
+  CUSTOMER: [
+    'tickets:read',
+    'tickets:create',
+    'billing:read',
+  ],
+};
 
-  // Seed 6 system roles
+async function main() {
+  console.log('Seeding authoritative RBAC foundation (M4)...');
+
+  // 1. Seed 6 system roles
   for (const role of SYSTEM_ROLES) {
     const existing = await prisma.role.findFirst({
       where: {
@@ -66,7 +121,7 @@ async function main() {
     }
   }
 
-  // Seed 13 explicit permissions
+  // 2. Seed 13 explicit permissions
   for (const perm of EXPLICIT_PERMISSIONS) {
     await prisma.permission.upsert({
       where: { key: perm.key },
@@ -79,11 +134,57 @@ async function main() {
     console.log(`Upserted permission: ${perm.key}`);
   }
 
-  // Decision 5: role_permissions MUST remain empty in M3
-  const rolePermissionCount = await prisma.rolePermission.count();
-  console.log(`role_permissions count: ${rolePermissionCount} (must remain 0)`);
+  // 3. Seed Approved Role-Permission mappings (40 total)
+  const roles = await prisma.role.findMany({ where: { isSystem: true, organizationId: null } });
+  const permissions = await prisma.permission.findMany();
+  const roleMap = new Map(roles.map((r) => [r.name, r.id]));
+  const permMap = new Map(permissions.map((p) => [p.key, p.id]));
 
-  console.log('RBAC foundation seed completed.');
+  let mappingsCount = 0;
+  for (const [roleName, permKeys] of Object.entries(APPROVED_ROLE_PERMISSIONS)) {
+    const roleId = roleMap.get(roleName);
+    if (!roleId) throw new Error(`Role ${roleName} not found`);
+
+    for (const permKey of permKeys) {
+      const permissionId = permMap.get(permKey);
+      if (!permissionId) throw new Error(`Permission ${permKey} not found`);
+
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId,
+            permissionId,
+          },
+        },
+        update: {},
+        create: {
+          roleId,
+          permissionId,
+        },
+      });
+      mappingsCount++;
+    }
+  }
+
+  console.log(`Seeded ${mappingsCount} role_permission mappings.`);
+
+  // Verify counts
+  const roleCount = await prisma.role.count({ where: { isSystem: true, organizationId: null } });
+  const permissionCount = await prisma.permission.count();
+  const rolePermissionCount = await prisma.rolePermission.count();
+
+  console.log(`Verification:`);
+  console.log(`- System roles: ${roleCount} (expected: 6)`);
+  console.log(`- Permissions: ${permissionCount} (expected: 13)`);
+  console.log(`- Role Permissions: ${rolePermissionCount} (expected: 40)`);
+
+  if (roleCount !== 6 || permissionCount !== 13 || rolePermissionCount !== 40) {
+    throw new Error(
+      `Counts mismatch! Roles: ${roleCount}, Permissions: ${permissionCount}, RolePermissions: ${rolePermissionCount}`
+    );
+  }
+
+  console.log('RBAC foundation seed successfully verified.');
 }
 
 main()

@@ -2,13 +2,21 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Menu, X, Shield } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, X, Shield, LogOut, User as UserIcon } from 'lucide-react';
 import { NavLinks } from './nav-links';
-import { cn } from '@remotfix/ui';
+import { useAuth } from './auth-context';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  const { user, tenant, logout } = useAuth();
+
+  // If on login page, render children directly without app shell navigation
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
 
   // Close mobile drawer on Escape key
   React.useEffect(() => {
@@ -66,10 +74,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-            <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-            Local Shell
-          </span>
+          {user && (
+            <button
+              onClick={() => logout()}
+              aria-label="Log out"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-red-50 hover:text-red-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              <LogOut className="size-3.5" />
+              <span>Exit</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -116,13 +130,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="pt-4 border-t border-border mt-auto">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>REMOTFIX Shell</span>
-                <span className="inline-flex items-center gap-1 font-mono">
-                  <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                  M2 Ready
-                </span>
-              </div>
+              {user ? (
+                <div className="space-y-2">
+                  <div className="text-xs">
+                    <p className="font-semibold text-slate-900 dark:text-white">{user.email}</p>
+                    <p className="text-slate-500">{tenant?.role || 'User'}</p>
+                  </div>
+                  <button
+                    onClick={() => logout()}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md bg-red-50 text-red-700 text-xs font-medium hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300"
+                  >
+                    <LogOut className="size-3.5" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>REMOTFIX Shell</span>
+                  <span className="font-mono">M4 Authenticated</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -144,10 +171,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Shield className="size-5 text-accent shrink-0" aria-hidden="true" />
               <span>REMOTFIX</span>
             </Link>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-              Dev
-            </span>
+            {tenant && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:text-blue-300">
+                {tenant.role}
+              </span>
+            )}
           </div>
 
           {/* Navigation Links */}
@@ -157,12 +185,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Desktop Sidebar Footer */}
           <div className="p-4 border-t border-border bg-slate-100/40 dark:bg-slate-900/40">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span className="truncate">Service Platform</span>
-              <span className="font-mono text-[10px] bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                v0.1.0
-              </span>
-            </div>
+            {user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                    <UserIcon className="size-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => logout()}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30 text-xs font-medium transition-colors"
+                >
+                  <LogOut className="size-3.5" />
+                  <span>Log Out</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span className="truncate">Service Platform</span>
+                <span className="font-mono text-[10px] bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  v0.1.0
+                </span>
+              </div>
+            )}
           </div>
         </aside>
 
