@@ -100,15 +100,25 @@ export const createTicketSchema = z.object({
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 
 export const updateTicketSchema = z.object({
-  title: z.string().trim().min(1).max(255).optional(),
+  title: z.string().trim().min(1, 'Title cannot be empty').max(255).optional(),
   description: z.string().trim().max(5000).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-  status: z.enum(['OPEN', 'SCHEDULED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED']).optional(),
-  diagnosticNotes: z.string().trim().max(5000).optional(),
-  billableHours: z.number().min(0).max(1000).optional(),
-  totalAmount: z.number().min(0).max(1000000).optional(),
-});
+}).strict();
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
+
+export const assignTicketSchema = z.object({
+  technicianId: z.string().uuid('Invalid technician ID format'),
+  scheduledAt: z.string().datetime({ message: 'Invalid ISO datetime format' }).optional(),
+}).strict();
+export type AssignTicketInput = z.infer<typeof assignTicketSchema>;
+
+export const resolveTicketSchema = z.object({
+  diagnosticNotes: z.string().trim().max(5000).optional(),
+}).strict().optional().default({});
+export type ResolveTicketInput = z.infer<typeof resolveTicketSchema>;
+
+export const emptyBodySchema = z.object({}).strict().optional().default({});
+export type EmptyBodyInput = z.infer<typeof emptyBodySchema>;
 
 export const provisionTenantSchema = z.object({
   organizationName: z.string().trim().min(2, 'Organization name must be at least 2 characters').max(100),

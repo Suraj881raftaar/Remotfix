@@ -19,13 +19,19 @@ import { MfaGuard } from '../common/guards/mfa.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import {
+  assignTicketSchema,
+  AssignTicketInput,
   createTicketSchema,
+  emptyBodySchema,
+  EmptyBodyInput,
   listTicketsQuerySchema,
   ListTicketsQueryInput,
+  resolveTicketSchema,
+  ResolveTicketInput,
   updateTicketSchema,
+  UpdateTicketInput,
 } from '@remotfix/validation';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { UpdateTicketInput } from '../common/services/resource-authorization.service';
 import { CreateTicketDto, TicketsService } from './tickets.service';
 
 @ApiTags('Tickets')
@@ -93,6 +99,73 @@ export class TicketsController {
     @CurrentTenant() tenant: TenantContext
   ) {
     const data = await this.ticketsService.createTicket(user.id, tenant, dto);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post(':id/assign')
+  @RequirePermission('tickets:assign')
+  @ApiOperation({ summary: 'Assign ticket to technician within active tenant' })
+  async assignTicket(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(new ZodValidationPipe(assignTicketSchema)) dto: AssignTicketInput,
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext
+  ) {
+    const data = await this.ticketsService.assignTicket(id, user.id, tenant, dto);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post(':id/start-work')
+  @RequirePermission('tickets:update')
+  @ApiOperation({ summary: 'Transition ticket from SCHEDULED to IN_PROGRESS' })
+  async startWork(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(new ZodValidationPipe(emptyBodySchema)) _dto: EmptyBodyInput,
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext
+  ) {
+    const data = await this.ticketsService.startWork(id, user.id, tenant);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post(':id/resolve')
+  @RequirePermission('tickets:update')
+  @ApiOperation({ summary: 'Transition ticket from IN_PROGRESS to RESOLVED with diagnostic notes' })
+  async resolveTicket(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(new ZodValidationPipe(resolveTicketSchema)) dto: ResolveTicketInput,
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext
+  ) {
+    const data = await this.ticketsService.resolveTicket(id, user.id, tenant, dto);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post(':id/close')
+  @ApiOperation({ summary: 'Close resolved ticket (Customer own-ticket or staff tickets:update)' })
+  async closeTicket(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(new ZodValidationPipe(emptyBodySchema)) _dto: EmptyBodyInput,
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext
+  ) {
+    const data = await this.ticketsService.closeTicket(id, user.id, tenant);
     return {
       success: true,
       data,

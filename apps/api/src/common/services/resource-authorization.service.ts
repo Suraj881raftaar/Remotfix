@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { SystemRole, TenantContext } from '@remotfix/types';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -60,6 +60,11 @@ export class ResourceAuthorizationService {
       throw new NotFoundException('Ticket not found in this organization');
     }
 
+    // Terminal lock: CLOSED tickets cannot be mutated under any circumstances
+    if (ticket.status === 'CLOSED' && action === 'update') {
+      throw new BadRequestException('Cannot update a closed ticket. Closed tickets are locked and read-only.');
+    }
+
     const roleName = tenantContext.roleName;
 
     // 2. Role-specific scoping
@@ -94,6 +99,10 @@ export class ResourceAuthorizationService {
         if (updateData.status === 'CLOSED' || updateData.status === 'CANCELLED') {
           throw new ForbiddenException('Staff members cannot transition tickets to terminal states');
         }
+
+        if ((updateData as any).status !== undefined) {
+          throw new BadRequestException('Status cannot be modified via generic PATCH. Use dedicated lifecycle endpoints.');
+        }
       }
     } else if (
       roleName === SystemRole.OWNER ||
@@ -101,6 +110,9 @@ export class ResourceAuthorizationService {
       roleName === SystemRole.MANAGER
     ) {
       // Tenant-wide access within active organization
+      if (action === 'update' && updateData && (updateData as any).status !== undefined) {
+        throw new BadRequestException('Status cannot be modified via generic PATCH. Use dedicated lifecycle endpoints.');
+      }
     } else {
       throw new ForbiddenException('Unauthorized role for ticket access');
     }
