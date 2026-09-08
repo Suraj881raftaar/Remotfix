@@ -514,7 +514,8 @@ async function run() {
       const json = await res.json();
       assert.strictEqual(json.success, true);
       assert.strictEqual(json.data.status, 'RESOLVED');
-      assert.ok(json.data.description.includes('Display panel replaced with OEM part'));
+      assert.strictEqual(json.data.resolutionNotes, 'Display panel replaced with OEM part. Color calibration verified.');
+      assert.strictEqual(json.data.description, 'Screen is flickering severely');
       lifecycleTicket = json.data;
     });
 
@@ -532,6 +533,8 @@ async function run() {
       const json = await res.json();
       assert.strictEqual(json.success, true);
       assert.strictEqual(json.data.status, 'CLOSED');
+      assert.strictEqual(json.data.resolutionNotes, undefined, 'resolutionNotes must be omitted for CUSTOMER');
+      assert.strictEqual(json.data.description, 'Screen is flickering severely', 'description must be preserved exactly');
       lifecycleTicket = json.data;
     });
 

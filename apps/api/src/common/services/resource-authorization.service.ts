@@ -117,6 +117,46 @@ export class ResourceAuthorizationService {
       throw new ForbiddenException('Unauthorized role for ticket access');
     }
 
+    return this.sanitizeTicketForRole(ticket, roleName);
+  }
+
+  /**
+   * Sanitizes ticket fields based on role.
+   * Customers must NOT receive technician resolution notes, billing values,
+   * or staff-only internal operational details. Customer descriptions remain
+   * strictly customer-authored and are returned exactly as stored.
+   */
+  sanitizeTicketForRole(ticket: any, roleName: SystemRole | string): any {
+    if (!ticket) {
+      return ticket;
+    }
+
+    if (roleName === SystemRole.CUSTOMER) {
+      const sanitized = { ...ticket };
+
+      // 1. Structured projection: Omit internal resolution notes and operational fields
+      delete sanitized.resolutionNotes;
+      delete sanitized.diagnosticNotes;
+      delete sanitized.internalNotes;
+      delete sanitized.technicianNotes;
+      delete sanitized.billableHours;
+      delete sanitized.totalAmount;
+
+      // 2. If assignedTechnician relation is present, omit internal staff user details (e.g. email)
+      if (sanitized.assignedTechnician?.user) {
+        sanitized.assignedTechnician = {
+          ...sanitized.assignedTechnician,
+          user: {
+            id: sanitized.assignedTechnician.user.id,
+            firstName: sanitized.assignedTechnician.user.firstName,
+            lastName: sanitized.assignedTechnician.user.lastName,
+          },
+        };
+      }
+
+      return sanitized;
+    }
+
     return ticket;
   }
 

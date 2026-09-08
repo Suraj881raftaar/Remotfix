@@ -81,8 +81,13 @@ export class TicketsService {
       this.prisma.ticket.count({ where }),
     ]);
 
+    const sanitizedItems =
+      tenant.roleName === SystemRole.CUSTOMER
+        ? items.map((item) => this.resourceAuth.sanitizeTicketForRole(item, tenant.roleName))
+        : items;
+
     return {
-      items,
+      items: sanitizedItems,
       total,
       page,
       pageSize,
@@ -142,7 +147,7 @@ export class TicketsService {
       metadata: { fieldsUpdated: Object.keys(dto) },
     });
 
-    return updated;
+    return this.resourceAuth.sanitizeTicketForRole(updated, tenant.roleName);
   }
 
   /**
@@ -349,15 +354,11 @@ export class TicketsService {
       }
     }
 
-    const updatedDescription = dto.diagnosticNotes
-      ? `${ticket.description || ''}\n\n[Resolution Notes]: ${dto.diagnosticNotes}`.trim()
-      : ticket.description;
-
     const updated = await this.prisma.ticket.update({
       where: { id: ticketId },
       data: {
         status: 'RESOLVED',
-        description: updatedDescription,
+        resolutionNotes: dto.diagnosticNotes || null,
       },
       include: {
         contact: true,
@@ -384,7 +385,7 @@ export class TicketsService {
       },
     });
 
-    return updated;
+    return this.resourceAuth.sanitizeTicketForRole(updated, tenant.roleName);
   }
 
   /**
@@ -477,7 +478,7 @@ export class TicketsService {
       },
     });
 
-    return updated;
+    return this.resourceAuth.sanitizeTicketForRole(updated, tenant.roleName);
   }
 
   /**
@@ -576,6 +577,6 @@ export class TicketsService {
       result: 'SUCCESS',
     });
 
-    return ticket;
+    return this.resourceAuth.sanitizeTicketForRole(ticket, tenant.roleName);
   }
 }

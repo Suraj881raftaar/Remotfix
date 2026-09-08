@@ -296,6 +296,7 @@ model Ticket {
   assignedTechnicianId String?               @map("assigned_technician_id") @db.Uuid
   title                String                @db.VarChar(255)
   description          String?               @db.Text
+  resolutionNotes      String?               @map("resolution_notes") @db.Text
   status               TicketStatus          @default(OPEN)
   priority             TicketPriority        @default(MEDIUM)
   scheduledAt          DateTime?             @map("scheduled_at") @db.Timestamptz
