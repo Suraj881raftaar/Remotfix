@@ -49,7 +49,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Booking intake establishes in Milestone 5
+            Service booking intake stream
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Roster management connects in Milestone 5
+            Technician dispatch and availability
           </p>
         </div>
 
@@ -85,7 +85,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Ticketing lifecycle connects in Milestone 5
+            5-stage service ticket lifecycle
           </p>
         </div>
 
@@ -104,7 +104,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Monorepo Foundation Verified
+            Service Platform Operational
           </p>
         </div>
       </div>
@@ -136,14 +136,14 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between py-2 border-b border-border/60">
               <span className="text-slate-600 dark:text-slate-400">Database Layer</span>
               <span className="text-xs font-mono text-slate-700 dark:text-slate-300">
-                PostgreSQL 16 / Prisma (Pending M3)
+                PostgreSQL 16 / Prisma (Verified)
               </span>
             </div>
             <div className="flex items-center justify-between py-2">
               <span className="text-slate-600 dark:text-slate-400">Application Shell</span>
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                Milestone 2 Active
+                Platform Core Active
               </span>
             </div>
           </div>
