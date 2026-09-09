@@ -13,11 +13,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, tenant, logout } = useAuth();
 
-  // If on login page, render children directly without app shell navigation
-  if (pathname === '/login') {
-    return <>{children}</>;
-  }
-
   // Close mobile drawer on Escape key
   React.useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -41,6 +36,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
+
+  // If on login page, render children directly without app shell navigation
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
