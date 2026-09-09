@@ -86,7 +86,7 @@ Every decision in this register is classified under exactly one of five formal s
 | **ADR-0048** | RemoteSupportProvider Protocol & Signaling Tooling | `HUMAN DECISION REQUIRED` | REQUIRED |
 | **ADR-0049** | PaymentProvider MVP Scope (Invoices vs Subscriptions) | `HUMAN DECISION REQUIRED` | REQUIRED |
 | **ADR-0050** | MapsProvider Default Zero-Cost Backend Selection | `HUMAN DECISION REQUIRED` | REQUIRED |
-| **ADR-0051** | Approved Initial Low-Cost Hosting Platform Selection | `HUMAN DECISION REQUIRED` | REQUIRED |
+| **ADR-0051** | Approved Initial Low-Cost Hosting Platform Selection | `HUMAN DECISION APPROVED` | APPROVED (2026-09-09) |
 | **ADR-0052** | Exclusion of Kubernetes in Initial MVP Architecture | `MASTER-LOCKED` | NOT REQUIRED |
 | **ADR-0053** | Exclusion of Multi-Region Active-Active Topologies | `MASTER-LOCKED` | NOT REQUIRED |
 | **ADR-0054** | Exclusion of Complex Service Mesh in Initial MVP | `MASTER-LOCKED` | NOT REQUIRED |
@@ -1066,7 +1066,7 @@ Every decision in this register is classified under exactly one of five formal s
 > - **MASTER AMBIGUITIES: 7** (ADR-0044 through ADR-0050). These represent textual contradictions, priority clashes, or scope gaps directly present in [`docs/MASTER-SPEC-001-002.md`](file:///c:/SURAJ/Remotfix/docs/MASTER-SPEC-001-002.md).
 > - **MATERIAL HUMAN DECISIONS: 8** (ADR-0044 through ADR-0051). These represent material architectural, commercial, and scope items that cannot be resolved autonomously by engineering agents and require formal human stakeholder sign-off. This includes the 7 Master ambiguities plus ADR-0051 (hosting vendor selection for the approved low-cost environment).
 > 
-> These counts track distinct concepts. All 8 material decisions remain strictly unresolved: Status is `HUMAN DECISION REQUIRED` and Chosen Option is *"No option approved."*
+> Governance status: ADR-0044 through ADR-0050 remain unresolved (`HUMAN DECISION REQUIRED` / *"No option approved"*). ADR-0051 was formally resolved and approved via explicit stakeholder sign-off on 2026-09-09 (`HUMAN DECISION APPROVED` / Two-Stage Hosting Progression).
 
 ### ADR-0044 — SLA Tracking/Escalation Priority & Delivery Phase
 - **Decision:** Determine whether SLA tracking and escalation is delivered in MVP Phase 3 as a Must-Have or deferred as a Should-Have.
@@ -1223,24 +1223,33 @@ Every decision in this register is classified under exactly one of five formal s
 ---
 
 ### ADR-0051 — Approved Initial Low-Cost Hosting Platform Selection
-- **Decision:** Select the specific low-cost/free-tier hosting platform for deploying the NestJS API container and PostgreSQL database in Phase 9.
-- **Status:** `HUMAN DECISION REQUIRED`
-- **Source:** Master Section 1.1, 1.3, 2.2, Phase 9; Analysis Section 16.8.
+- **Decision:** Establish a two-stage hosting progression for the low-cost environment mandated by Master Section 2.2:
+  1. **Stage 1 — ₹0 / $0 MVP Beta / Customer Feedback Environment (STAGING / TEST tier):** Deploy the MVP at zero infrastructure cost for demonstration, testing, and customer feedback using verified legitimate free tiers:
+     - **Next.js Web:** Vercel (Hobby Tier)
+     - **NestJS API:** Render (Free Docker Web Service with accepted ~30–60s cold start on idle)
+     - **PostgreSQL 16:** Neon Serverless PostgreSQL (Free Tier, permanent, 0.5 GB, no 30-day deletion)
+     - **Redis 7:** Upstash Redis (Free Tier, serverless TLS `rediss://`, 500k commands/month)
+     - **Data Boundary:** Strictly demo/test organizations only; NO real, sensitive, financial, or production customer data.
+  2. **Stage 2 — Paid MVP Production Environment:**
+     - **Upgrade Trigger:** Strictly conditioned on signing the **FIRST GENUINE PAYING CLIENT**.
+     - **Infrastructure:** Upgrade to paid managed infrastructure (e.g. Railway Core, Render Paid, or Hetzner/DO VPS with Docker) providing always-warm compute, managed PostgreSQL with automated offsite backups, transactional email (Resend), production domain/HTTPS routing (`remotfix.in`), and full production data governance.
+- **Status:** `HUMAN DECISION APPROVED`
+- **Source:** Master Section 1.1, 1.3, 2.2, 2.4, Phase 9; Analysis Section 16.8; Human Decision Record 2026-09-09.
 - **Requirement IDs:** Requirement ID: NOT YET ASSIGNED
 - **Options Considered:**
-  - Option A: Render / Railway / Fly.io container platforms.
-  - Option B: Low-cost cloud virtual private server (e.g., Hetzner / DigitalOcean VPS).
-  - Option C: AWS / GCP free-tier container services.
-- **Chosen Option:** No option approved. (Carried forward unresolved; requires human stakeholder sign-off).
-- **Reason:** Master Section 2.2 specifies "Provider-independent / approved low-cost environment" without selecting a specific vendor.
-- **Security Impact:** Ingress firewall, TLS certificate provisioning, and container isolation.
-- **Privacy Impact:** Datacenter jurisdictional location must align with privacy requirements (GDPR).
-- **Tenant-Isolation Impact:** None directly.
-- **Database Impact:** Determines managed PostgreSQL vs containerized PostgreSQL in early phases.
-- **API Impact:** Base domain and reverse proxy configuration.
-- **Provider Impact:** Governs deployment scripts in `infrastructure/provisioning/`.
-- **Human Approval:** REQUIRED
-- **Date:** 2026-09-04
+  - Option A: Single-stage paid cloud container platforms (Render Paid / Railway Hobby / VPS) from Day 1.
+  - Option B: Single-stage free-tier platforms with expiring databases (Render Free DB - rejected due to 30-day deletion policy).
+  - Option C: Two-Stage Hosting Progression: Stage 1 (₹0 / $0 Serverless/Free Tier for Beta Feedback) → Stage 2 (Paid Managed Infrastructure upon First Paying Client).
+- **Chosen Option:** Option C: Two-Stage Hosting Progression (Stage 1 ₹0 Beta → Stage 2 Paid Production on First Paying Client).
+- **Reason:** Formally approved by human stakeholder on 2026-09-09 to satisfy the business constraint of ₹0 infrastructure spend during demonstration and feedback phases, while maintaining strict architectural compatibility, zero code modifications, and seamless migration to paid infrastructure once commercial revenue is unlocked.
+- **Security Impact:** Tenant isolation, RBAC, and cryptographic authentication remain identical across tiers. Stage 1 enforces a strict policy ban on real production customer or financial data.
+- **Privacy Impact:** Zero sensitive customer PII stored on Stage 1 free infrastructure. Production compliance and formal ISMS/PIMS controls activate upon Stage 2 transition.
+- **Tenant-Isolation Impact:** Full multi-tenant database scoping (`organization_id`) and `TenantGuard` enforced across all environments.
+- **Database Impact:** Stage 1 uses Neon Serverless PostgreSQL (standard PostgreSQL 16 connection string, zero code changes). Migration to Stage 2 paid database is executed via standard `pg_dump` / `pg_restore`.
+- **API Impact:** Standard NestJS Docker container deployed to Render; ephemeral filesystem respected.
+- **Provider Impact:** Provider-independent abstractions (`StorageProvider`, `PaymentProvider`, `EmailProvider`) remain intact.
+- **Human Approval:** APPROVED (Formal Stakeholder Sign-Off: 2026-09-09)
+- **Date:** 2026-09-09 (Amended from 2026-09-04 baseline)
 
 ---
 
