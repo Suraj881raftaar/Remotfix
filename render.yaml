@@ -1,0 +1,38 @@
+# ------------------------------------------------------------------------------
+# REMOTFIX API — Render Blueprint Specification (ADR-0051 Zero-Cost MVP Beta)
+# ------------------------------------------------------------------------------
+# Provider: Render (Free Web Service Tier)
+# Cost: ₹0 / $0
+# Idle behavior: Service spins down after 15 minutes of inactivity;
+#                cold start latency of ~30-60s on first incoming request.
+# ------------------------------------------------------------------------------
+
+services:
+  - type: web
+    name: remotfix-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_SECRET
+        generateValue: true
+      - key: MFA_ENCRYPTION_KEY
+        generateValue: true
+      - key: ADMIN_KEY
+        generateValue: true

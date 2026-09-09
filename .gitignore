@@ -15,6 +15,7 @@ node_modules/
 .env.production
 .env.staging
 !.env.example
+!.env.beta.example
 
 # Build & compilation outputs
 dist/
