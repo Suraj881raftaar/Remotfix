@@ -50,20 +50,77 @@ export const DnsGuideModal: React.FC<DnsGuideModalProps> = ({ isOpen, onClose })
         {/* Content Body */}
         <div className="mt-6 space-y-6 text-xs sm:text-sm text-slate-300">
           
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-2">
+          <div className="rounded-xl bg-gradient-to-r from-orange-950/40 via-cyan-950/30 to-black border border-orange-500/30 p-4 space-y-2">
             <h4 className="font-semibold text-white flex items-center gap-2">
-              <Globe className="h-4 w-4 text-cyan-400" />
-              <span>Domain & DNS Health Check Status</span>
+              <Globe className="h-4 w-4 text-orange-400" />
+              <span>Direct Deployment to Cloudflare Pages for remotfix.in</span>
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Your domain <span className="font-mono text-cyan-300">remotfix.in</span> is configured to route traffic through Cloudflare's global anycast network, providing automated DDoS mitigation, HTTP/3, and SSL edge encryption.
+              Because your domain <span className="font-mono text-cyan-300">remotfix.in</span> is managed on Cloudflare, deploying this React/Vite application directly to <strong>Cloudflare Pages</strong> is the fastest and most reliable way with zero cost and automated SSL.
             </p>
           </div>
 
-          {/* Cloudflare Recommended Records */}
+          {/* 3 Step Cloudflare Pages Deployment Steps */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              3 Simple Steps to Deploy to Cloudflare Pages
+            </h4>
+            
+            <div className="rounded-xl border border-white/10 bg-black/40 p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-400 text-black text-xs font-bold">1</span>
+                <div>
+                  <strong className="text-white text-xs block">Export / Push Code to GitHub</strong>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Push this codebase to your GitHub repository (or build locally using <code className="bg-white/10 px-1 py-0.5 rounded text-white font-mono">npm run build</code> to produce the <code className="text-cyan-300 font-mono">dist</code> folder).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-400 text-black text-xs font-bold">2</span>
+                <div>
+                  <strong className="text-white text-xs block">Create Project in Cloudflare Pages</strong>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Go to <strong>Cloudflare Dashboard &gt; Workers &amp; Pages &gt; Create application &gt; Pages</strong> &gt; Connect to Git.
+                  </p>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono bg-black/60 p-2.5 rounded border border-white/10">
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Framework Preset:</span>
+                      <span className="text-cyan-400">Vite</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Build Command:</span>
+                      <span className="text-white">npm run build</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Build Output Directory:</span>
+                      <span className="text-white">dist</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Node Version:</span>
+                      <span className="text-white">20 or 22</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-400 text-black text-xs font-bold">3</span>
+                <div>
+                  <strong className="text-white text-xs block">Link Custom Domain remotfix.in</strong>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    In your Pages project settings, click <strong>Custom domains</strong> &gt; <strong>Set up a custom domain</strong> &gt; Enter <code className="text-cyan-300 font-mono">remotfix.in</code> (and <code className="text-cyan-300 font-mono">www.remotfix.in</code>). Cloudflare will automatically configure the DNS and issue your SSL certificate!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cloudflare DNS Direct Records */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-              Standard Cloudflare DNS Records for remotfix.in
+              DNS Records Summary for remotfix.in
             </h4>
             <div className="rounded-xl border border-white/10 bg-black/60 overflow-x-auto">
               <table className="w-full text-left font-mono text-xs">
@@ -71,7 +128,7 @@ export const DnsGuideModal: React.FC<DnsGuideModalProps> = ({ isOpen, onClose })
                   <tr className="border-b border-white/10 text-slate-400 bg-white/5">
                     <th className="p-3">Type</th>
                     <th className="p-3">Name</th>
-                    <th className="p-3">Content / Target</th>
+                    <th className="p-3">Target / Value</th>
                     <th className="p-3">Proxy Status</th>
                     <th className="p-3 text-right">Action</th>
                   </tr>
@@ -80,14 +137,14 @@ export const DnsGuideModal: React.FC<DnsGuideModalProps> = ({ isOpen, onClose })
                   <tr>
                     <td className="p-3 text-cyan-400 font-bold">CNAME</td>
                     <td className="p-3 text-slate-200">@ (root)</td>
-                    <td className="p-3 text-slate-300 truncate max-w-[180px]">ghs.googlehosted.com</td>
-                    <td className="p-3 text-orange-400">Proxied (Orange)</td>
+                    <td className="p-3 text-slate-300 truncate max-w-[180px]">remotfix.pages.dev</td>
+                    <td className="p-3 text-orange-400">Proxied (Orange Cloud)</td>
                     <td className="p-3 text-right">
                       <button
-                        onClick={() => handleCopy('ghs.googlehosted.com', 'cname-root')}
+                        onClick={() => handleCopy('remotfix.pages.dev', 'cname-pages')}
                         className="text-[11px] text-slate-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"
                       >
-                        {copiedRecord === 'cname-root' ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                        {copiedRecord === 'cname-pages' ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                         <span>Copy</span>
                       </button>
                     </td>
@@ -96,7 +153,7 @@ export const DnsGuideModal: React.FC<DnsGuideModalProps> = ({ isOpen, onClose })
                     <td className="p-3 text-cyan-400 font-bold">CNAME</td>
                     <td className="p-3 text-slate-200">www</td>
                     <td className="p-3 text-slate-300 truncate max-w-[180px]">remotfix.in</td>
-                    <td className="p-3 text-orange-400">Proxied (Orange)</td>
+                    <td className="p-3 text-orange-400">Proxied (Orange Cloud)</td>
                     <td className="p-3 text-right">
                       <button
                         onClick={() => handleCopy('remotfix.in', 'cname-www')}
@@ -109,7 +166,7 @@ export const DnsGuideModal: React.FC<DnsGuideModalProps> = ({ isOpen, onClose })
                   </tr>
                   <tr>
                     <td className="p-3 text-amber-400 font-bold">TXT</td>
-                    <td className="p-3 text-slate-200">@ (root)</td>
+                    <td className="p-3 text-slate-200">@</td>
                     <td className="p-3 text-slate-300 truncate max-w-[180px]">v=spf1 include:_spf.google.com ~all</td>
                     <td className="p-3 text-slate-400">DNS Only</td>
                     <td className="p-3 text-right">
@@ -130,14 +187,15 @@ export const DnsGuideModal: React.FC<DnsGuideModalProps> = ({ isOpen, onClose })
           {/* Cloudflare Edge Settings */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="rounded-lg bg-black/40 border border-white/10 p-3.5">
-              <span className="text-slate-400 block font-semibold mb-1">SSL/TLS Encryption Mode</span>
-              <p className="text-slate-300">Set to <strong className="text-white">Full (Strict)</strong> in Cloudflare Dashboard under SSL/TLS for end-to-end encryption.</p>
+              <span className="text-slate-400 block font-semibold mb-1">SSL/TLS Mode</span>
+              <p className="text-slate-300">Set to <strong className="text-white">Full (Strict)</strong> under SSL/TLS for end-to-end encryption.</p>
             </div>
             <div className="rounded-lg bg-black/40 border border-white/10 p-3.5">
               <span className="text-slate-400 block font-semibold mb-1">Always Use HTTPS</span>
-              <p className="text-slate-300">Enable <strong className="text-white">Always Use HTTPS</strong> and Automatic HTTPS Rewrites in Cloudflare Edge Certificates.</p>
+              <p className="text-slate-300">Enable in Cloudflare Edge Certificates for automatic HTTPS redirect.</p>
             </div>
           </div>
+
 
           {/* SEO & Mobile Optimization notes */}
           <div className="border-t border-white/10 pt-4 space-y-2 text-xs text-slate-400">
