@@ -1,0 +1,7 @@
+{
+  "name": "Remotfix — On-Demand Remote IT Support & Troubleshooting",
+  "description": "Fast, secure remote IT support, computer troubleshooting, virus removal, and system optimization for remotfix.in. Powered by encrypted remote sessions with Cloudflare DNS management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
