@@ -186,14 +186,32 @@ https://remotfix.in · support@remotfix.in`;
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-slate-500 block">Operating System</span>
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Service Track</span>
+            <span className="text-cyan-300 font-semibold">
+              {ticket.serviceType === 'onsite_dispatch' ? 'On-Site Field Engineering' : 'Remote Diagnostic Session'}
+            </span>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Regional Operations Hub</span>
+            <span className="text-white font-semibold">
+              {ticket.regionalHubName || 'National Operations Center'}
+            </span>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Environment / OS</span>
             <span className="text-white font-semibold">{ticket.os}</span>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-slate-500 block">Remote Access Tool</span>
-            <span className="text-cyan-300 font-semibold">
-              {ticket.preferredTool === 'quick_assist' ? 'Microsoft Quick Assist (Win+Ctrl+Q)' : 'AnyDesk Remote'}
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">
+              {ticket.serviceType === 'onsite_dispatch' ? 'Dispatch Unit Status' : 'Remote Access Tool'}
+            </span>
+            <span className="text-amber-300 font-semibold">
+              {ticket.serviceType === 'onsite_dispatch' 
+                ? (ticket.fieldUnit ? `${ticket.fieldUnit.unitCode} (${ticket.fieldUnit.status.toUpperCase()})` : 'Mobile Van Queued')
+                : (ticket.preferredTool === 'quick_assist' ? 'Microsoft Quick Assist (Win+Ctrl+Q)' : 'AnyDesk Remote')}
             </span>
           </div>
         </div>
@@ -419,7 +437,21 @@ CC: suraj@remotfix.in`;
         {/* System & Hardware Diagnostics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-slate-500 block">Operating System</span>
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Service Track</span>
+            <span className="text-amber-300 font-semibold">
+              {ticket.serviceType === 'onsite_dispatch' ? 'ON-SITE FIELD DISPATCH' : 'REMOTE DIAGNOSTIC'}
+            </span>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Assigned Regional Hub</span>
+            <span className="text-white font-semibold">
+              {ticket.regionalHubName || 'National NOC (Remote)'}
+            </span>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Operating System / Platform</span>
             <span className="text-white font-semibold">{ticket.os}</span>
           </div>
 
@@ -429,9 +461,13 @@ CC: suraj@remotfix.in`;
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-slate-500 block">Preferred Remote Tool</span>
-            <span className="text-cyan-300 font-semibold">
-              {ticket.preferredTool === 'quick_assist' ? 'Quick Assist (Win+Ctrl+Q)' : 'AnyDesk Remote'}
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">
+              {ticket.serviceType === 'onsite_dispatch' ? 'Field Unit Code' : 'Preferred Remote Tool'}
+            </span>
+            <span className="text-cyan-300 font-semibold font-mono">
+              {ticket.serviceType === 'onsite_dispatch'
+                ? (ticket.fieldUnit?.unitCode || 'QUEUED FOR MOBILE DISPATCH')
+                : (ticket.preferredTool === 'quick_assist' ? 'Quick Assist (Win+Ctrl+Q)' : 'AnyDesk Remote')}
             </span>
           </div>
 

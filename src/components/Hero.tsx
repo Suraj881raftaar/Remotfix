@@ -128,11 +128,11 @@ Emergency Support: support@remotfix.in
         <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-400">
           <span className="text-white">remotfix.in</span>
           <span aria-hidden="true">·</span>
-          <span>Remote IT Support & Computer Troubleshooting</span>
+          <span>Regional IT Infrastructure & Managed Technology Services</span>
           <span aria-hidden="true">·</span>
           <span className="text-emerald-400 flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Accepting Launch Early Access
+            5 Metro Operations Hubs Live
           </span>
         </div>
 
@@ -141,30 +141,30 @@ Emergency Support: support@remotfix.in
           {/* Left Column: Headline, Value Proposition, Trust Badges */}
           <div className="lg:col-span-7">
             <h1 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl text-balance leading-[1.08]">
-              Instant Remote IT Support & Computer Troubleshooting.
+              Regional IT Infrastructure & Managed Technology Services.
             </h1>
             
             <p className="mt-6 text-base sm:text-lg leading-relaxed text-slate-300 max-w-2xl">
-              Skip the physical repair shop. Connect in minutes with certified specialists to fix virus infections, blue screen crashes, sluggish systems, and network failures over an encrypted, live-view remote session.
+              High-availability technology operations combining 24/7 Tier-3 remote diagnostic telemetry with certified on-site mobile field engineers dispatched across Delhi NCR, Mumbai, Bengaluru, Hyderabad, and Kolkata in under 2 hours.
             </p>
 
             {/* Value bullets */}
             <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm text-slate-300">
               <div className="flex items-start gap-2.5">
                 <ShieldCheck className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-                <span>100% Encrypted sessions with zero unattended access</span>
+                <span>Zero-Trust security & managed 24/7 NOC/SOC telemetry</span>
               </div>
               <div className="flex items-start gap-2.5">
                 <Clock className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-                <span>Average 15-minute diagnostic turnaround</span>
+                <span>Sub-15m remote triage & &lt;2hr physical field arrival</span>
               </div>
               <div className="flex items-start gap-2.5">
                 <Wrench className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-                <span>Strict No-Fix, No-Fee refund guarantee</span>
+                <span>On-site switch, server rack & hardware component swaps</span>
               </div>
               <div className="flex items-start gap-2.5">
                 <Laptop className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-                <span>Full support for Windows, Mac & Linux</span>
+                <span>Zero-touch Mac, Windows & Linux fleet provisioning</span>
               </div>
             </div>
 
@@ -174,14 +174,14 @@ Emergency Support: support@remotfix.in
                 onClick={onOpenDiagnostic}
                 className="flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-black transition-all hover:bg-slate-200 cursor-pointer shadow-lg shadow-white/5"
               >
-                <span>Calculate Diagnostic Time</span>
+                <span>Launch Diagnostic / Dispatch</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
               <button
                 onClick={onOpenContact}
                 className="rounded-lg border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10 cursor-pointer"
               >
-                Direct Helpdesk Inquiry
+                Regional Contract Quote
               </button>
             </div>
 

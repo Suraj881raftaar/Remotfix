@@ -11,15 +11,22 @@ import { CareersPage } from './components/CareersPage';
 import { BookingWizard } from './components/BookingWizard';
 import { TicketTracker } from './components/TicketTracker';
 import { TechnicianConsole } from './components/TechnicianConsole';
+import { RegionalHubExplorer } from './components/RegionalHubExplorer';
+import { RegionalNocMonitor } from './components/RegionalNocMonitor';
+import { ManagedItEstimator } from './components/ManagedItEstimator';
 import { Footer } from './components/Footer';
 import { DnsGuideModal } from './components/DnsGuideModal';
 import { ContactModal } from './components/ContactModal';
-import { DiagnosticIssue } from './types';
-import { MessageSquare, UserCheck, Activity, Zap } from 'lucide-react';
+import { DiagnosticIssue, ServiceType, RegionalHub } from './types';
+import { REGIONAL_HUBS } from './data/regionalHubsData';
+import { MessageSquare, UserCheck, Activity, Zap, Compass, Truck } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [activeTrackTicketId, setActiveTrackTicketId] = useState<string | undefined>(undefined);
+  const [bookingServiceType, setBookingServiceType] = useState<ServiceType>('remote');
+  const [bookingRegionalHub, setBookingRegionalHub] = useState<RegionalHub>(REGIONAL_HUBS[0]);
+  
   const [isDnsGuideOpen, setIsDnsGuideOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedIssueForModal, setSelectedIssueForModal] = useState<DiagnosticIssue | null>(null);
@@ -79,10 +86,32 @@ export default function App() {
     navigateToView('track');
   };
 
+  const handleBookRegionalDispatch = (hub: RegionalHub) => {
+    setBookingServiceType('onsite_dispatch');
+    setBookingRegionalHub(hub);
+    navigateToView('book');
+  };
+
+  const handleBookRemoteFix = () => {
+    setBookingServiceType('remote');
+    navigateToView('book');
+  };
+
+  const handleManagedItProposal = (details: {
+    workstations: number;
+    servers: number;
+    branches: number;
+    tier: string;
+    estimatedCost: string;
+  }) => {
+    setSelectedCategoryForModal(`Managed IT Proposal (${details.tier} - ${details.estimatedCost}/mo)`);
+    setIsContactModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-[#090A0F] text-slate-100 flex flex-col selection:bg-white selection:text-black">
       
-      {/* 1-Row 3-Zone Top Navigation Bar */}
+      {/* 1-Row Navigation Bar */}
       <Navbar
         currentView={currentView}
         onNavigateView={navigateToView}
@@ -98,6 +127,8 @@ export default function App() {
       {currentView === 'book' ? (
         <main className="flex-1">
           <BookingWizard
+            initialServiceType={bookingServiceType}
+            initialRegionalHub={bookingRegionalHub}
             onTicketCreated={handleTicketCreated}
             onCancel={() => navigateToView('home')}
             onNavigateToConsole={() => navigateToView('console')}
@@ -107,7 +138,10 @@ export default function App() {
         <main className="flex-1">
           <TicketTracker
             initialTicketId={activeTrackTicketId}
-            onBookNew={() => navigateToView('book')}
+            onBookNew={() => {
+              setBookingServiceType('remote');
+              navigateToView('book');
+            }}
             onSwitchToConsole={() => navigateToView('console')}
           />
         </main>
@@ -118,49 +152,77 @@ export default function App() {
             onBackToHome={() => navigateToView('home')}
           />
         </main>
+      ) : currentView === 'regional' ? (
+        <main className="flex-1">
+          {/* Regional Hubs & Infrastructure Command Center Dedicated View */}
+          <RegionalHubExplorer
+            onBookDispatch={handleBookRegionalDispatch}
+            onBookRemote={handleBookRemoteFix}
+          />
+          <RegionalNocMonitor />
+          <ManagedItEstimator onRequestProposal={handleManagedItProposal} />
+        </main>
       ) : currentView === 'careers' ? (
         <main className="flex-1">
           <CareersPage onBackToHome={() => navigateToView('home')} />
         </main>
       ) : (
         <main className="flex-1">
-          {/* Quick MVP Test Callout Bar */}
-          <div className="border-b border-cyan-500/20 bg-cyan-950/20 py-2.5 text-xs">
+          {/* Regional Infrastructure Callout Banner */}
+          <div className="border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-slate-900 to-black py-2.5 text-xs">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-2 text-cyan-300 font-medium">
-                <Zap className="h-3.5 w-3.5 text-cyan-400" />
+                <Compass className="h-3.5 w-3.5 text-cyan-400" />
                 <span>
-                  <strong>Remotfix MVP Testing Active:</strong> Try the live booking flow and 1-click remote session room.
+                  <strong>Regional IT Infrastructure Active:</strong> 5 Metro Operations Hubs · Sub-15m Remote Triage & &lt;2hr Field Arrival.
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => navigateToView('book')}
-                  className="text-white hover:text-cyan-300 underline underline-offset-4 cursor-pointer font-semibold"
+                  onClick={() => navigateToView('regional')}
+                  className="text-cyan-300 hover:text-white underline underline-offset-4 cursor-pointer font-semibold"
                 >
-                  Book Test Session &rarr;
+                  Regional Hubs & NOC &rarr;
                 </button>
                 <span className="text-slate-600">|</span>
                 <button
-                  onClick={() => navigateToView('console')}
+                  onClick={() => {
+                    setBookingServiceType('onsite_dispatch');
+                    navigateToView('book');
+                  }}
                   className="text-amber-300 hover:text-amber-200 underline underline-offset-4 cursor-pointer font-semibold"
                 >
-                  Staff Console &rarr;
+                  Request Field Dispatch &rarr;
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Hero & Waitlist Section */}
+          {/* Hero Section */}
           <Hero
-            onOpenDiagnostic={() => navigateToView('book')}
+            onOpenDiagnostic={() => {
+              setBookingServiceType('remote');
+              navigateToView('book');
+            }}
             onOpenContact={() => scrollToSection('contact')}
           />
+
+          {/* Regional Hub Explorer Section */}
+          <RegionalHubExplorer
+            onBookDispatch={handleBookRegionalDispatch}
+            onBookRemote={handleBookRemoteFix}
+          />
+
+          {/* Live Infrastructure Telemetry NOC */}
+          <RegionalNocMonitor />
 
           {/* Interactive Diagnostic & Estimator */}
           <DiagnosticEstimator
             onSelectIssueForQuote={handleOpenDiagnosticQuote}
           />
+
+          {/* Managed IT Contract Cost Calculator */}
+          <ManagedItEstimator onRequestProposal={handleManagedItProposal} />
 
           {/* Core Capabilities Bento Grid (01-04) */}
           <ServicesBento
@@ -178,7 +240,7 @@ export default function App() {
         </main>
       )}
 
-      {/* High-Contrast Quiet Footer */}
+      {/* Footer */}
       <Footer
         onOpenDnsGuide={() => setIsDnsGuideOpen(true)}
         onOpenContact={() => scrollToSection('contact')}
@@ -199,7 +261,7 @@ export default function App() {
         prefilledCategory={selectedCategoryForModal}
       />
 
-      {/* Testing Role Switcher Floating Control (Bottom Right) */}
+      {/* Floating Role Switcher Control */}
       <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2">
         {currentView === 'console' ? (
           <button
@@ -215,7 +277,7 @@ export default function App() {
             className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-black/90 px-4 py-2.5 text-xs font-bold text-amber-300 shadow-2xl backdrop-blur-md hover:bg-black transition-colors cursor-pointer"
           >
             <UserCheck className="h-4 w-4 text-amber-400" />
-            <span>Staff Console (Suraj)</span>
+            <span>Operations Console (Suraj)</span>
           </button>
         )}
       </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Menu, X, ArrowUpRight, Cpu, Activity, UserCheck, Zap, Laptop } from 'lucide-react';
+import { ShieldCheck, Menu, X, ArrowUpRight, Cpu, Activity, UserCheck, Zap, Laptop, Compass, Truck } from 'lucide-react';
 
-export type AppView = 'home' | 'book' | 'track' | 'console' | 'careers';
+export type AppView = 'home' | 'regional' | 'book' | 'track' | 'console' | 'careers';
 
 interface NavbarProps {
   currentView: AppView;
@@ -54,8 +54,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: 4-6 clean text navigation links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+        {/* Zone 2: Navigation Links */}
+        <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-slate-300">
           <button
             onClick={() => handleSwitchView('home')}
             className={`transition-colors cursor-pointer ${
@@ -63,6 +63,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             Overview
+          </button>
+
+          <button
+            onClick={() => handleSwitchView('regional')}
+            className={`transition-colors cursor-pointer flex items-center gap-1.5 ${
+              currentView === 'regional' ? 'text-cyan-400 font-bold' : 'hover:text-white text-slate-300'
+            }`}
+          >
+            <Compass className="h-3.5 w-3.5 text-cyan-400" />
+            <span>Regional Hubs & NOC</span>
           </button>
           
           <button
@@ -72,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Zap className="h-3.5 w-3.5 text-cyan-400" />
-            <span>Book Diagnostic</span>
+            <span>Book / Dispatch</span>
           </button>
 
           <button
@@ -129,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleSwitchView('book')}
             className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-black transition-all hover:bg-slate-200 cursor-pointer whitespace-nowrap shadow-sm hover:shadow-white/10"
           >
-            <span>Book Fix Session</span>
+            <span>Book Fix / Dispatch</span>
             <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -157,18 +167,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               Overview & Services
             </button>
             <button
+              onClick={() => handleSwitchView('regional')}
+              className="text-left py-2 text-cyan-300 font-bold border-b border-white/5 flex items-center justify-between"
+            >
+              <span>Regional Hubs & Live NOC</span>
+              <span className="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">NOC</span>
+            </button>
+            <button
               onClick={() => handleSwitchView('book')}
               className="text-left py-2 text-cyan-400 font-bold border-b border-white/5 flex items-center justify-between"
             >
-              <span>Book Diagnostic Session</span>
-              <span className="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">MVP</span>
+              <span>Book Fix / Field Dispatch</span>
+              <span className="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">Live</span>
             </button>
             <button
               onClick={() => handleSwitchView('track')}
               className="text-left py-2 text-emerald-400 font-bold border-b border-white/5 flex items-center justify-between"
             >
               <span>Track Ticket & Remote Room</span>
-              <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">Live</span>
+              <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">Portal</span>
             </button>
             <button
               onClick={() => handleSwitchView('console')}
@@ -208,7 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => handleSwitchView('book')}
                 className="w-full rounded-lg bg-white py-2.5 text-center text-xs font-semibold text-black hover:bg-slate-200"
               >
-                Launch Diagnostic Booking
+                Launch Booking Wizard
               </button>
             </div>
           </div>

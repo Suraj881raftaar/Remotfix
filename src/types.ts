@@ -58,6 +58,39 @@ export interface DispatchedEmail {
   htmlBody: string;
 }
 
+export type ServiceType = 'remote' | 'onsite_dispatch' | 'managed_infrastructure';
+export type RegionalZoneId = 'north' | 'west' | 'south_blr' | 'south_hyd' | 'east';
+export type FieldDispatchStatus = 'queued' | 'dispatched' | 'en_route' | 'on_site' | 'completed';
+
+export interface FieldUnitDispatch {
+  engineerName: string;
+  phone: string;
+  unitCode: string;
+  status: FieldDispatchStatus;
+  eta: string;
+  dispatchedAt?: string;
+  notes?: string;
+}
+
+export interface RegionalHub {
+  id: string;
+  zoneId: RegionalZoneId;
+  name: string;
+  zone: 'North' | 'West' | 'South' | 'East';
+  headquarters: string;
+  address: string;
+  citiesCovered: string[];
+  pincodePrefixes: string[];
+  status: 'Operational' | 'High Capacity' | 'Maintenance';
+  activeEngineers: number;
+  avgRemoteResponseMins: number;
+  fieldDispatchSlaHours: number;
+  nocUptimePercentage: number;
+  primaryDataCenter: string;
+  contactPhone: string;
+  supportedServices: string[];
+}
+
 export interface Ticket {
   id: string;
   customerName: string;
@@ -70,6 +103,13 @@ export interface Ticket {
   scheduledTime?: string;
   description: string;
   status: TicketStatus;
+  serviceType?: ServiceType;
+  regionalZone?: RegionalZoneId;
+  regionalHubName?: string;
+  siteAddress?: string;
+  pincode?: string;
+  hardwareScope?: string;
+  fieldUnit?: FieldUnitDispatch;
   assignedTechnician?: string;
   preferredTool: RemoteTool;
   sessionCode?: string;
@@ -79,4 +119,5 @@ export interface Ticket {
   createdAt: string;
   updatedAt: string;
 }
+
 

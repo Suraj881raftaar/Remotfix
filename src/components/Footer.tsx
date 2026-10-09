@@ -1,10 +1,11 @@
 import React from 'react';
-import { Cpu, ShieldCheck, Globe, Mail } from 'lucide-react';
+import { Cpu, ShieldCheck, Globe, Mail, Compass, Truck } from 'lucide-react';
+import { AppView } from './Navbar';
 
 interface FooterProps {
   onOpenDnsGuide: () => void;
   onOpenContact: () => void;
-  onNavigateView: (view: 'home' | 'book' | 'track' | 'console' | 'careers') => void;
+  onNavigateView: (view: AppView) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ 
@@ -32,26 +33,35 @@ export const Footer: React.FC<FooterProps> = ({
               </span>
             </button>
             <p className="max-w-sm text-xs text-slate-400 leading-relaxed">
-              On-demand remote IT support, computer troubleshooting, virus eradication, and operating system diagnostics across global networks.
+              Regional IT Infrastructure & Managed Technology Services Platform. On-demand remote troubleshooting and rapid mobile field engineering across major metro tech corridors.
             </p>
             <div className="flex items-center gap-2 text-xs text-slate-300">
               <Globe className="h-3.5 w-3.5 text-cyan-400" />
               <span>Domain: <strong className="text-white font-mono">remotfix.in</strong></span>
               <span className="text-slate-600" aria-hidden="true">·</span>
-              <span className="text-orange-400">DNS via Cloudflare</span>
+              <span className="text-orange-400">Cloudflare Anycast Protected</span>
             </div>
           </div>
 
           {/* Col 2: Services & Links */}
           <div className="md:col-span-3 space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white">MVP Portals</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-white">Platform Modules</h4>
             <ul className="space-y-1.5 text-slate-400">
+              <li>
+                <button
+                  onClick={() => onNavigateView('regional')}
+                  className="hover:text-cyan-300 transition-colors cursor-pointer text-left font-medium flex items-center gap-1.5"
+                >
+                  <Compass className="h-3 w-3 text-cyan-400" />
+                  <span>Regional Hubs & Live NOC</span>
+                </button>
+              </li>
               <li>
                 <button
                   onClick={() => onNavigateView('book')}
                   className="hover:text-cyan-400 transition-colors cursor-pointer text-left font-medium"
                 >
-                  Book Remote Diagnostic (MVP)
+                  Book Fix / Field Dispatch
                 </button>
               </li>
               <li>
@@ -82,11 +92,9 @@ export const Footer: React.FC<FooterProps> = ({
             </ul>
           </div>
 
-
-
           {/* Col 3: Direct Contact */}
           <div className="md:col-span-4 space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white">Direct Helpdesk</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-white">Regional Operations Desks</h4>
             <div className="space-y-2 text-slate-300">
               <div className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-cyan-400" />
@@ -95,15 +103,16 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-amber-300" />
                 <a href="mailto:suraj@remotfix.in" className="hover:text-amber-300 font-mono">suraj@remotfix.in</a>
-                <span className="text-[10px] text-amber-400/80 font-mono">(Founder)</span>
+                <span className="text-[10px] text-amber-400/80 font-mono">(Lead Systems Engineer)</span>
               </div>
 
               <div className="pt-2">
                 <button
-                  onClick={onOpenContact}
-                  className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white hover:bg-white/10 transition-colors"
+                  onClick={onOpenDnsGuide}
+                  className="flex items-center gap-1.5 text-xs text-orange-400 hover:underline cursor-pointer"
                 >
-                  Submit Support Ticket
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Cloudflare DNS & Edge Status Guide &rarr;</span>
                 </button>
               </div>
             </div>
@@ -111,21 +120,17 @@ export const Footer: React.FC<FooterProps> = ({
 
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-12 border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
+        {/* Bottom Bar */}
+        <div className="mt-8 border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
           <div>
-            © {new Date().getFullYear()} Remotfix (remotfix.in). All rights reserved. Encrypted remote sessions.
+            &copy; {new Date().getFullYear()} Remotfix (remotfix.in). All rights reserved. Zero-Trust IT Infrastructure Operations.
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={onOpenDnsGuide}
-              className="text-amber-400 hover:underline inline-flex items-center gap-1"
-            >
-              <ShieldCheck className="h-3 w-3" />
-              <span>Cloudflare DNS Guide</span>
-            </button>
+            <button onClick={onOpenContact} className="hover:text-slate-400 cursor-pointer">Security Protocol</button>
             <span>·</span>
-            <span>No-Fix, No-Fee Guarantee</span>
+            <button onClick={onOpenContact} className="hover:text-slate-400 cursor-pointer">SLA Agreement</button>
+            <span>·</span>
+            <button onClick={onOpenContact} className="hover:text-slate-400 cursor-pointer">Regional Logistics</button>
           </div>
         </div>
 

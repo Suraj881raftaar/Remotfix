@@ -18,9 +18,16 @@ import {
   Zap, 
   Lock,
   Mail,
-  Bell
+  Bell,
+  Truck,
+  MapPin,
+  Building2,
+  PhoneCall,
+  Activity,
+  Phone,
+  MessageSquare
 } from 'lucide-react';
-import { Ticket, TicketStatus, RemoteTool } from '../types';
+import { Ticket, TicketStatus, RemoteTool, FieldDispatchStatus } from '../types';
 import { ticketStore } from '../services/ticketStore';
 import { EmailNotificationModal } from './EmailNotificationModal';
 
@@ -99,28 +106,38 @@ export const TicketTracker: React.FC<TicketTrackerProps> = ({
 
   const handleDownloadReport = () => {
     if (!currentTicket) return;
+    const isOnSite = currentTicket.serviceType === 'onsite_dispatch';
     const content = `=====================================================
-REMOTFIX.IN — OFFICIAL REMOTE DIAGNOSTIC REPORT
+REMOTFIX ${isOnSite ? 'ON-SITE FIELD ENGINEERING' : 'REMOTE DIAGNOSTIC'} SERVICE REPORT
+Ticket Reference: ${currentTicket.id}
+Regional Hub: ${currentTicket.regionalHubName || 'National NOC'}
+Generated: ${new Date().toLocaleString()}
 =====================================================
-Ticket Reference:    ${currentTicket.id}
-Customer Name:       ${currentTicket.customerName}
-Customer Email:      ${currentTicket.customerEmail}
-Operating System:    ${currentTicket.os}
-Problem Category:    ${currentTicket.category}
-Assigned Specialist: ${currentTicket.assignedTechnician || 'Suraj (Lead Systems Engineer)'}
-Status:              ${currentTicket.status.toUpperCase()}
-Timestamp Created:   ${new Date(currentTicket.createdAt).toLocaleString()}
-Timestamp Closed:    ${new Date(currentTicket.updatedAt).toLocaleString()}
 
-SYMPTOM LOG:
-${currentTicket.description}
+CLIENT INFORMATION:
+- Name: ${currentTicket.customerName}
+- Email: ${currentTicket.customerEmail}
+- Phone: ${currentTicket.customerPhone || 'N/A'}
+${isOnSite && currentTicket.siteAddress ? `- Site Address: ${currentTicket.siteAddress}` : ''}
+
+ENVIRONMENT & FAULT SPECIFICATION:
+- OS / Platform: ${currentTicket.os}
+- Problem Category: ${currentTicket.category}
+- Priority SLA: ${currentTicket.urgency}
+${currentTicket.hardwareScope ? `- Hardware Scope: ${currentTicket.hardwareScope}` : ''}
+
+ASSIGNED SPECIALIST:
+- Lead Technician / Unit: ${currentTicket.assignedTechnician || 'Suraj Yadav (Lead Engineer)'}
+${isOnSite && currentTicket.fieldUnit ? `- Mobile Van Code: ${currentTicket.fieldUnit.unitCode}` : ''}
 
 RESOLUTION SUMMARY & ACTIONS TAKEN:
-${currentTicket.resolutionSummary || 'Diagnostic scan completed. System integrity verified under 256-bit TLS protocol.'}
+${currentTicket.resolutionSummary || 'Diagnostic and hardware verification completed cleanly.'}
 
-Zero-Risk Verification: All temporary remote authorization tokens purged.
-Domain: https://remotfix.in (DNS via Cloudflare)
-Support Hotline: support@remotfix.in
+TIMELINE LOGS:
+${currentTicket.messages.map((m) => `[${new Date(m.timestamp).toLocaleTimeString()}] ${m.sender.toUpperCase()}: ${m.text}`).join('\n')}
+
+Security Verification: All hardware changes tested & credentials securely disposed.
+Support Escalation: support@remotfix.in · https://remotfix.in
 =====================================================`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -145,11 +162,12 @@ Support Hotline: support@remotfix.in
   };
 
   const currentStep = currentTicket ? getStepIndex(currentTicket.status) : 1;
+  const isOnSite = currentTicket?.serviceType === 'onsite_dispatch';
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
       
-      {/* Top Banner & Quick Switcher */}
+      {/* Top Banner & Search Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-6 mb-8">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400">
@@ -157,7 +175,7 @@ Support Hotline: support@remotfix.in
             <span>Customer Live Tracking Portal · remotfix.in</span>
           </div>
           <h1 className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-white">
-            Real-Time Ticket & Remote Session Room
+            Real-Time Ticket & Dispatch Room
           </h1>
         </div>
 
@@ -197,10 +215,11 @@ Support Hotline: support@remotfix.in
       </div>
 
       {/* Ticket Selection Bar (Quick Chips for Testing) */}
-      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/5 text-xs">
+      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/5 text-xs scrollbar-none">
         <span className="text-slate-400 font-semibold shrink-0">Recent Test Tickets:</span>
         {tickets.map((t) => {
           const isSelected = t.id === currentTicket?.id;
+          const tIsOnSite = t.serviceType === 'onsite_dispatch';
           return (
             <button
               key={t.id}
@@ -212,7 +231,10 @@ Support Hotline: support@remotfix.in
               }`}
             >
               <span>{t.id}</span>
-              <span className="ml-1.5 text-[10px] text-slate-500 capitalize">({t.status.replace('_', ' ')})</span>
+              <span className={`ml-1.5 text-[10px] uppercase ${tIsOnSite ? 'text-amber-400' : 'text-cyan-400'}`}>
+                [{tIsOnSite ? 'Field' : 'Remote'}]
+              </span>
+              <span className="ml-1 text-[10px] text-slate-500 capitalize">({t.status.replace('_', ' ')})</span>
             </button>
           );
         })}
@@ -223,7 +245,7 @@ Support Hotline: support@remotfix.in
           <AlertCircle className="h-10 w-10 text-slate-500 mx-auto mb-3" />
           <h3 className="text-lg font-bold text-white">No Ticket Selected</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            Please search for an existing ticket reference above or book a new remote troubleshooting session.
+            Please search for an existing ticket reference above or book a new troubleshooting session.
           </p>
           <button
             onClick={onBookNew}
@@ -233,9 +255,9 @@ Support Hotline: support@remotfix.in
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
           
-          {/* Left Column: Progress Stepper, Ticket Metadata & Remote Room */}
+          {/* Left Column: Progress Stepper, Ticket Metadata & Session / Field Room (col-span-8) */}
           <div className="lg:col-span-8 space-y-6">
             
             {/* Header Ticket Information Card */}
@@ -245,13 +267,24 @@ Support Hotline: support@remotfix.in
                   <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
                     <span className="text-white font-bold text-base">{currentTicket.id}</span>
                     <span>·</span>
-                    <span className="text-cyan-400 font-semibold">{currentTicket.category}</span>
+                    <span className={isOnSite ? 'text-amber-400 font-bold' : 'text-cyan-400 font-bold'}>
+                      {isOnSite ? 'ON-SITE FIELD DISPATCH' : 'REMOTE SCREEN SHARE'}
+                    </span>
                     <span>·</span>
-                    <span className="capitalize">{currentTicket.os}</span>
+                    <span className="text-slate-300">{currentTicket.regionalHubName || 'North Zone'}</span>
                   </div>
                   <h2 className="mt-1 font-display text-xl sm:text-2xl font-bold text-white">
-                    {currentTicket.description}
+                    {currentTicket.category}
                   </h2>
+                  <p className="mt-1 text-xs text-slate-300">
+                    {currentTicket.description}
+                  </p>
+                  {isOnSite && currentTicket.siteAddress && (
+                    <div className="mt-2 text-xs text-amber-300 flex items-center gap-1.5 font-mono">
+                      <MapPin className="h-3.5 w-3.5 text-amber-400" />
+                      <span>{currentTicket.siteAddress} {currentTicket.pincode ? `(${currentTicket.pincode})` : ''}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-right">
@@ -270,15 +303,15 @@ Support Hotline: support@remotfix.in
                 </div>
               </div>
 
-              {/* Progress Stepper (5 States) */}
+              {/* Progress Stepper (5 States adapted for service type) */}
               <div className="mt-6 pt-2">
                 <div className="grid grid-cols-5 gap-2 text-center text-xs">
                   {[
-                    { num: 1, label: 'Logged', statusKey: 'received' },
-                    { num: 2, label: 'Assigned', statusKey: 'assigned' },
-                    { num: 3, label: 'Handshake', statusKey: 'connecting' },
-                    { num: 4, label: 'In Session', statusKey: 'in_session' },
-                    { num: 5, label: 'Resolved', statusKey: 'resolved' }
+                    { num: 1, label: 'Logged', desc: 'Received at Hub' },
+                    { num: 2, label: isOnSite ? 'Dispatched' : 'Assigned', desc: isOnSite ? 'Mobile Unit' : 'Technician' },
+                    { num: 3, label: isOnSite ? 'En Route' : 'Handshake', desc: isOnSite ? 'Live ETA' : 'PIN Ready' },
+                    { num: 4, label: isOnSite ? 'On-Site' : 'In Session', desc: isOnSite ? 'Hardware Triage' : 'Diagnostic' },
+                    { num: 5, label: 'Resolved', desc: 'Signed Off' }
                   ].map((stepItem) => {
                     const isDone = currentStep >= stepItem.num;
                     const isCurrent = currentStep === stepItem.num;
@@ -298,22 +331,29 @@ Support Hotline: support@remotfix.in
                         <span className={`mt-2 text-[11px] font-medium ${isDone || isCurrent ? 'text-white' : 'text-slate-600'}`}>
                           {stepItem.label}
                         </span>
+                        <span className="text-[10px] text-slate-500 hidden sm:block font-mono">
+                          {stepItem.desc}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Assigned Specialist Banner */}
+              {/* Assigned Specialist & Email Review Quick Row */}
               <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 font-bold">
-                    <UserCheck className="h-4 w-4" />
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg border font-bold ${
+                    isOnSite ? 'bg-amber-950/60 border-amber-500/30 text-amber-400' : 'bg-cyan-950/60 border-cyan-500/30 text-cyan-400'
+                  }`}>
+                    {isOnSite ? <Truck className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px]">Primary Certified Technician</span>
+                    <span className="text-slate-400 block text-[11px]">
+                      {isOnSite ? 'Assigned Field Engineer & Unit' : 'Primary Certified Specialist'}
+                    </span>
                     <strong className="text-white text-sm">
-                      {currentTicket.assignedTechnician || 'Automated Queue · Assigning Next Available Engineer'}
+                      {currentTicket.assignedTechnician || 'Regional Dispatch Queue · Assigning Specialist'}
                     </strong>
                   </div>
                 </div>
@@ -331,301 +371,317 @@ Support Hotline: support@remotfix.in
                   </button>
 
                   <div className="text-right font-mono text-[11px] text-slate-400">
-                    <span>Contact: </span>
-                    <a href="mailto:suraj@remotfix.in" className="text-amber-300 hover:underline">
-                      suraj@remotfix.in
+                    <span>Hotline: </span>
+                    <a href="mailto:support@remotfix.in" className="text-amber-300 hover:underline">
+                      support@remotfix.in
                     </a>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 1-Click Guided Remote Connection Room Card */}
-            <div className="rounded-2xl border border-white/20 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-6 sm:p-8 shadow-2xl">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400">
-                    <Lock className="h-3.5 w-3.5" />
-                    <span>256-Bit Encrypted Remote Bridge</span>
-                  </div>
-                  <h3 className="font-display text-xl font-bold text-white mt-1">
-                    Remote Connection Room
-                  </h3>
-                </div>
-
-                {/* Tool Switcher Tabs */}
-                <div className="flex items-center gap-1 rounded-lg bg-black/60 p-1 border border-white/10 text-xs">
-                  <button
-                    onClick={() => setActiveToolTab('quick_assist')}
-                    className={`rounded-md px-3 py-1.5 font-medium transition-colors cursor-pointer ${
-                      activeToolTab === 'quick_assist'
-                        ? 'bg-cyan-400 text-black font-semibold'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Quick Assist (Windows)
-                  </button>
-                  <button
-                    onClick={() => setActiveToolTab('anydesk')}
-                    className={`rounded-md px-3 py-1.5 font-medium transition-colors cursor-pointer ${
-                      activeToolTab === 'anydesk'
-                        ? 'bg-orange-400 text-black font-semibold'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    AnyDesk (Mac/Linux/PC)
-                  </button>
-                </div>
-              </div>
-
-              {/* QUICK ASSIST TAB CONTENT */}
-              {activeToolTab === 'quick_assist' && (
-                <div className="mt-6 space-y-6">
-                  {currentTicket.sessionCode ? (
-                    <div className="rounded-xl border border-cyan-400/40 bg-cyan-950/20 p-6 text-center space-y-3">
-                      <span className="text-xs uppercase tracking-wider text-cyan-400 font-semibold block">
-                        Your 6-Digit Microsoft Quick Assist Code
-                      </span>
-                      <div className="inline-flex items-center gap-4 bg-black/80 px-6 py-3 rounded-2xl border border-cyan-400/60 shadow-xl">
-                        <span className="font-mono text-3xl sm:text-4xl font-extrabold tracking-widest text-white">
-                          {currentTicket.sessionCode}
-                        </span>
-                        <button
-                          onClick={() => handleCopy(currentTicket.sessionCode!)}
-                          className="rounded-lg bg-cyan-400 hover:bg-cyan-300 p-2 text-black transition-colors cursor-pointer"
-                          title="Copy Code"
-                        >
-                          {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      <p className="text-xs text-slate-300">
-                        Code generated by technician. Valid for one-time live diagnostic session.
-                      </p>
+            {/* DUAL WORKSPACE: EITHER ON-SITE FIELD DISPATCH ROOM OR REMOTE HANDSHAKE ROOM */}
+            {isOnSite ? (
+              /* ON-SITE FIELD DISPATCH TRACKER */
+              <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-950/20 via-black to-black p-6 sm:p-8 shadow-2xl space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
+                      <Truck className="h-4 w-4" />
+                      <span>Mobile Field Engineering Telemetry</span>
                     </div>
-                  ) : (
-                    <div className="rounded-xl border border-white/10 bg-black/40 p-6 text-center space-y-2">
-                      <Clock className="h-6 w-6 text-amber-400 mx-auto animate-spin" />
-                      <h4 className="text-sm font-semibold text-white">Awaiting 6-Digit PIN from Technician</h4>
-                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                        Your technician is preparing the diagnostic environment and will dispatch your single-use code shortly.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 3 Step Instruction Guide */}
-                  <div className="rounded-xl bg-black/40 border border-white/10 p-5 space-y-3 text-xs">
-                    <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">
-                      Quick Assist Connection Guide (Windows 10 / 11):
-                    </h4>
-                    <ol className="space-y-2 text-slate-300 list-decimal pl-4">
-                      <li>
-                        Press <kbd className="bg-white/15 px-1.5 py-0.5 rounded font-mono text-white">Win + Ctrl + Q</kbd> on your keyboard to instantly launch Microsoft Quick Assist.
-                      </li>
-                      <li>
-                        In the <strong>Code from assistant</strong> box, enter the 6-digit code above.
-                      </li>
-                      <li>
-                        Click <strong>Submit</strong> and click <strong>Allow</strong> when the screen share confirmation prompt appears.
-                      </li>
-                    </ol>
+                    <h3 className="font-display text-xl font-bold text-white mt-1">
+                      On-Site Dispatch & Hardware Triage Room
+                    </h3>
                   </div>
-                </div>
-              )}
 
-              {/* ANYDESK TAB CONTENT */}
-              {activeToolTab === 'anydesk' && (
-                <div className="mt-6 space-y-6">
-                  <div className="rounded-xl border border-orange-500/30 bg-orange-950/20 p-5 space-y-3">
-                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                      <Laptop className="h-4 w-4 text-orange-400" />
-                      <span>AnyDesk Remote Diagnostic Protocol</span>
-                    </h4>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      For macOS, Linux, or custom Windows environments, AnyDesk provides high-frame-rate encrypted remote access.
-                    </p>
-                    <div className="bg-black/60 p-3 rounded-lg border border-white/10 flex items-center justify-between font-mono text-xs">
+                  <span className="font-mono text-xs font-bold px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase">
+                    Status: {currentTicket.fieldUnit?.status || 'Queued'}
+                  </span>
+                </div>
+
+                {/* Mobile Unit Telemetry Card */}
+                {currentTicket.fieldUnit ? (
+                  <div className="rounded-xl border border-white/10 bg-slate-900/60 p-5 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
                       <div>
-                        <span className="text-slate-500 block text-[10px]">Session Relay Address</span>
-                        <span className="text-orange-300 font-bold">
-                          {currentTicket.sessionCode || 'remotfix-support-9192'}
-                        </span>
+                        <span className="text-slate-400 block text-[10px]">Assigned Engineer</span>
+                        <strong className="text-white text-base">{currentTicket.fieldUnit.engineerName}</strong>
                       </div>
-                      <button
-                        onClick={() => handleCopy(currentTicket.sessionCode || 'remotfix-support-9192')}
-                        className="text-xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
-                      >
-                        {copiedCode ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                        <span>Copy Address</span>
-                      </button>
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">Mobile Unit ID</span>
+                        <strong className="text-cyan-400 text-base">{currentTicket.fieldUnit.unitCode}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">Estimated Arrival</span>
+                        <strong className="text-amber-300 text-base">{currentTicket.fieldUnit.eta}</strong>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-white/10 pt-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="text-slate-300">
+                        <span className="text-slate-400 font-mono">Logistics: </span>
+                        {currentTicket.fieldUnit.notes || 'Equipped with diagnostic hardware tools and component spares.'}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`tel:${currentTicket.fieldUnit.phone.replace(/[^0-9+]/g, '')}`}
+                          className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-black hover:bg-slate-200"
+                        >
+                          <PhoneCall className="h-3.5 w-3.5" />
+                          <span>Call Engineer</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="rounded-xl bg-black/40 border border-white/10 p-5 space-y-3 text-xs">
-                    <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">
-                      AnyDesk 3-Step Guide:
-                    </h4>
-                    <ol className="space-y-2 text-slate-300 list-decimal pl-4">
-                      <li>Launch AnyDesk on your device (free download available from anydesk.com).</li>
-                      <li>Share your 9-digit "This Desk" address in the live session chat on the right.</li>
-                      <li>When Remotfix requests access, click <strong>Accept</strong>. You can click <strong>Cancel</strong> at any second to sever access.</li>
-                    </ol>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-6 text-center space-y-2">
+                    <Clock className="h-6 w-6 text-amber-400 mx-auto animate-spin" />
+                    <h4 className="text-sm font-semibold text-white">Assigning Nearest Mobile Unit</h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                      Our regional dispatch coordinator is assigning a certified field engineer from {currentTicket.regionalHubName || 'the regional hub'}.
+                    </p>
                   </div>
+                )}
+
+                {/* On-Site Gate Clearance Instructions */}
+                <div className="rounded-xl border border-white/10 bg-black/40 p-4 space-y-2 text-xs">
+                  <h4 className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                    <Building2 className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Facility Access & Security Protocol:</span>
+                  </h4>
+                  <ul className="list-disc pl-4 space-y-1 text-slate-300 text-[11px]">
+                    <li>Ensure building security or gate desk has visitor clearance under <strong>Remotfix Engineering</strong>.</li>
+                    <li>The technician carries government photo ID and certified ESD-safe anti-static equipment.</li>
+                    <li>Power down non-essential equipment if rack-level electrical inspections are required.</li>
+                  </ul>
                 </div>
-              )}
 
-              {/* Post-Session Resolution Card if Resolved */}
-              {currentTicket.status === 'resolved' && (
-                <div className="mt-6 rounded-xl border border-emerald-500/40 bg-emerald-950/20 p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                      <CheckCircle2 className="h-5 w-5" />
-                      <span>Diagnostic Session Concluded & Verified</span>
+              </div>
+            ) : (
+              /* REMOTE SCREEN SHARE ROOM */
+              <div className="rounded-2xl border border-white/20 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-6 sm:p-8 shadow-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                      <Lock className="h-3.5 w-3.5" />
+                      <span>256-Bit Encrypted Remote Bridge</span>
                     </div>
+                    <h3 className="font-display text-xl font-bold text-white mt-1">
+                      Remote Connection Room
+                    </h3>
+                  </div>
+
+                  {/* Tool Switcher Tabs */}
+                  <div className="flex items-center gap-1 rounded-lg bg-black/60 p-1 border border-white/10 text-xs">
                     <button
-                      onClick={handleDownloadReport}
-                      className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-slate-200 transition-colors cursor-pointer"
+                      onClick={() => setActiveToolTab('quick_assist')}
+                      className={`rounded-md px-3 py-1.5 font-medium transition-colors cursor-pointer ${
+                        activeToolTab === 'quick_assist'
+                          ? 'bg-cyan-400 text-black font-semibold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
                     >
-                      <Download className="h-3.5 w-3.5" />
-                      <span>Download Official Report</span>
+                      Quick Assist (Windows)
+                    </button>
+                    <button
+                      onClick={() => setActiveToolTab('anydesk')}
+                      className={`rounded-md px-3 py-1.5 font-medium transition-colors cursor-pointer ${
+                        activeToolTab === 'anydesk'
+                          ? 'bg-orange-400 text-black font-semibold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      AnyDesk (Mac/Linux/PC)
                     </button>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed font-sans bg-black/40 p-3 rounded border border-white/10">
-                    {currentTicket.resolutionSummary || 'Diagnostic scan completed with clean system files and zero residual background threats.'}
-                  </p>
                 </div>
-              )}
-            </div>
+
+                {/* QUICK ASSIST TAB CONTENT */}
+                {activeToolTab === 'quick_assist' && (
+                  <div className="mt-6 space-y-6">
+                    {currentTicket.sessionCode ? (
+                      <div className="rounded-xl border border-cyan-400/40 bg-cyan-950/20 p-6 text-center space-y-3">
+                        <span className="text-xs uppercase tracking-wider text-cyan-400 font-semibold block">
+                          Your 6-Digit Microsoft Quick Assist Code
+                        </span>
+                        <div className="inline-flex items-center gap-4 bg-black/80 px-6 py-3 rounded-2xl border border-cyan-400/60 shadow-xl">
+                          <span className="font-mono text-3xl sm:text-4xl font-extrabold tracking-widest text-white">
+                            {currentTicket.sessionCode}
+                          </span>
+                          <button
+                            onClick={() => handleCopy(currentTicket.sessionCode!)}
+                            className="rounded-lg bg-cyan-400 hover:bg-cyan-300 p-2 text-black transition-colors cursor-pointer"
+                            title="Copy Code"
+                          >
+                            {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          Code generated by technician. Valid for one-time live diagnostic session.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-black/40 p-6 text-center space-y-2">
+                        <Clock className="h-6 w-6 text-amber-400 mx-auto animate-spin" />
+                        <h4 className="text-sm font-semibold text-white">Awaiting 6-Digit PIN from Technician</h4>
+                        <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                          Your technician is reviewing minidump symptoms and will dispatch your single-use code shortly.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 3 Step Instruction Guide */}
+                    <div className="rounded-xl bg-black/40 border border-white/10 p-5 space-y-3 text-xs">
+                      <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">
+                        Quick Assist Connection Guide (Windows 10 / 11):
+                      </h4>
+                      <ol className="space-y-2 text-slate-300 list-decimal pl-4">
+                        <li>
+                          Press <kbd className="bg-white/15 px-1.5 py-0.5 rounded font-mono text-white">Win + Ctrl + Q</kbd> on your keyboard to instantly launch Microsoft Quick Assist.
+                        </li>
+                        <li>
+                          In the <strong>Code from assistant</strong> box, enter the 6-digit code above.
+                        </li>
+                        <li>
+                          Click <strong>Submit</strong> and click <strong>Allow</strong> when the screen share confirmation prompt appears.
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                {/* ANYDESK TAB CONTENT */}
+                {activeToolTab === 'anydesk' && (
+                  <div className="mt-6 space-y-6">
+                    <div className="rounded-xl border border-orange-500/30 bg-orange-950/20 p-5 space-y-3">
+                      <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <Laptop className="h-4 w-4 text-orange-400" />
+                        <span>AnyDesk Remote Diagnostic Protocol</span>
+                      </h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        For macOS, Linux, or custom Windows environments, AnyDesk provides high-frame-rate encrypted remote access.
+                      </p>
+                      <div className="bg-black/60 p-3 rounded-lg border border-white/10 flex items-center justify-between font-mono text-xs">
+                        <div>
+                          <span className="text-slate-500 block text-[10px]">Session Relay Address</span>
+                          <span className="text-orange-300 font-bold">
+                            {currentTicket.sessionCode || 'remotfix-support-9192'}
+                          </span>
+                        </div>
+                        <span className="rounded bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 border border-emerald-500/30">
+                          TLS 1.3 Active
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Post-Session Resolution Summary Box (If Resolved) */}
+            {currentTicket.status === 'resolved' && (
+              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/20 p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span>Technical Resolution Complete</span>
+                  </div>
+                  <button
+                    onClick={handleDownloadReport}
+                    className="flex items-center gap-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 px-3 py-1.5 text-xs font-bold text-black uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download Report (.txt)</span>
+                  </button>
+                </div>
+                <div className="rounded-xl bg-black/60 border border-white/10 p-4 text-xs text-slate-200 font-mono leading-relaxed">
+                  {currentTicket.resolutionSummary}
+                </div>
+              </div>
+            )}
+
           </div>
 
-          {/* Right Column: Live Session Messaging & Ticket Metadata */}
-          <div className="lg:col-span-4 space-y-6">
-            
-            {/* Live Chat Box */}
-            <div className="rounded-2xl border border-white/15 bg-black/60 p-6 flex flex-col h-[520px]">
-              <div className="border-b border-white/10 pb-3 mb-3 flex items-center justify-between">
+          {/* Right Column: Live Bilateral Chat with Technician / Dispatcher (col-span-4) */}
+          <div className="lg:col-span-4">
+            <div className="rounded-2xl border border-white/15 bg-black/70 p-5 shadow-2xl flex flex-col h-[560px]">
+              <div className="border-b border-white/10 pb-3 flex items-center justify-between">
                 <div>
-                  <h4 className="font-display text-sm font-bold text-white">Live Session Exchange</h4>
-                  <span className="text-[10px] text-slate-400 font-mono">Encrypted Chat Channel</span>
+                  <h3 className="font-display text-sm font-bold text-white flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-cyan-400" />
+                    <span>Bilateral Live Chat</span>
+                  </h3>
+                  <span className="text-[11px] text-slate-400">Direct link to operations desk</span>
                 </div>
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
               </div>
 
-              {/* Message History */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+              {/* Chat Message Stream */}
+              <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1 text-xs">
                 {currentTicket.messages.map((msg) => {
-                  const isCustomer = msg.sender === 'customer';
-                  const isSystem = msg.sender === 'system';
+                  const isCust = msg.sender === 'customer';
+                  const isSys = msg.sender === 'system';
                   return (
                     <div
                       key={msg.id}
                       className={`flex flex-col ${
-                        isSystem
-                          ? 'items-center text-center'
-                          : isCustomer
-                          ? 'items-end'
-                          : 'items-start'
+                        isSys ? 'items-center text-center' : isCust ? 'items-end' : 'items-start'
                       }`}
                     >
-                      {isSystem ? (
-                        <div className="rounded-full bg-white/5 border border-white/10 px-3 py-1 text-[10px] text-slate-400 my-1 font-mono">
+                      {isSys ? (
+                        <div className="rounded-md bg-white/5 border border-white/5 px-2.5 py-1 text-[10px] text-slate-400 font-mono my-1">
                           {msg.text}
                         </div>
                       ) : (
                         <div
-                          className={`max-w-[85%] rounded-xl p-3 ${
-                            isCustomer
-                              ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-500/30'
-                              : 'bg-white/10 text-slate-100 border border-white/15'
+                          className={`max-w-[85%] rounded-2xl p-3 leading-relaxed ${
+                            isCust
+                              ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-100 rounded-br-none'
+                              : 'bg-white/10 border border-white/10 text-slate-200 rounded-bl-none'
                           }`}
                         >
                           <div className="text-[10px] font-mono text-slate-400 mb-0.5">
-                            {isCustomer ? 'You (Customer)' : currentTicket.assignedTechnician || 'Technician'}
+                            {isCust ? 'You (Customer)' : currentTicket.assignedTechnician || 'Operations Engineer'}
                           </div>
-                          <p className="leading-relaxed">{msg.text}</p>
+                          <div>{msg.text}</div>
                         </div>
                       )}
-                      <span className="text-[9px] text-slate-500 font-mono mt-0.5 px-1">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Chat Input */}
-              <form onSubmit={handleSendMessage} className="mt-3 pt-3 border-t border-white/10 flex gap-2">
+              {/* Message Input */}
+              <form onSubmit={handleSendMessage} className="border-t border-white/10 pt-3 flex gap-2">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type note or AnyDesk ID..."
-                  className="flex-1 rounded-lg border border-white/15 bg-black px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                  placeholder="Type message to engineer..."
+                  className="flex-1 rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
                 />
                 <button
                   type="submit"
-                  disabled={!chatInput.trim()}
-                  className="rounded-lg bg-white hover:bg-slate-200 px-3 py-2 text-black transition-colors disabled:opacity-40 cursor-pointer"
+                  className="rounded-lg bg-cyan-400 hover:bg-cyan-300 p-2 text-black transition-colors cursor-pointer"
                   title="Send Message"
                 >
-                  <Send className="h-3.5 w-3.5" />
+                  <Send className="h-4 w-4" />
                 </button>
               </form>
             </div>
-
-            {/* Quick Details Box */}
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 text-xs text-slate-300 space-y-2.5 font-mono">
-              <div className="text-white font-bold font-sans text-xs border-b border-white/10 pb-2">
-                Customer Record
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Name:</span>
-                <span className="text-white">{currentTicket.customerName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Email:</span>
-                <span className="text-slate-200 truncate max-w-[170px]">{currentTicket.customerEmail}</span>
-              </div>
-              {currentTicket.customerPhone && (
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Phone:</span>
-                  <span className="text-slate-200">{currentTicket.customerPhone}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-slate-500">Urgency:</span>
-                <span className="text-cyan-400 uppercase">{currentTicket.urgency}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Scheduled:</span>
-                <span className="text-slate-200">{currentTicket.scheduledTime || 'Immediate Connection'}</span>
-              </div>
-
-              <div className="pt-2 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmailModalDefaultTab('customer');
-                    setIsEmailModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-950/30 hover:bg-cyan-950/60 py-2 text-xs font-semibold text-cyan-300 transition-colors cursor-pointer"
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  <span>Inspect Dispatched Emails</span>
-                </button>
-              </div>
-            </div>
-
           </div>
 
         </div>
       )}
 
-      {/* Automated Email Notification Modal */}
-      {currentTicket && (
+      {/* Email Notification Modal */}
+      {isEmailModalOpen && currentTicket && (
         <EmailNotificationModal
+          ticket={currentTicket}
           isOpen={isEmailModalOpen}
           onClose={() => setIsEmailModalOpen(false)}
-          ticket={currentTicket}
           defaultTab={emailModalDefaultTab}
         />
       )}
