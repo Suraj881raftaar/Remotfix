@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navbar } from './components/Navbar';
+import { Navbar, AppView } from './components/Navbar';
 import { CloudflareBadge } from './components/CloudflareBadge';
 import { Hero } from './components/Hero';
 import { DiagnosticEstimator } from './components/DiagnosticEstimator';
@@ -8,19 +8,28 @@ import { SecurityProtocol } from './components/SecurityProtocol';
 import { ContactSection } from './components/ContactSection';
 import { FaqSection } from './components/FaqSection';
 import { CareersPage } from './components/CareersPage';
+import { BookingWizard } from './components/BookingWizard';
+import { TicketTracker } from './components/TicketTracker';
+import { TechnicianConsole } from './components/TechnicianConsole';
 import { Footer } from './components/Footer';
 import { DnsGuideModal } from './components/DnsGuideModal';
 import { ContactModal } from './components/ContactModal';
 import { DiagnosticIssue } from './types';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, UserCheck, Activity, Zap } from 'lucide-react';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'careers'>('home');
+  const [currentView, setCurrentView] = useState<AppView>('home');
+  const [activeTrackTicketId, setActiveTrackTicketId] = useState<string | undefined>(undefined);
   const [isDnsGuideOpen, setIsDnsGuideOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedIssueForModal, setSelectedIssueForModal] = useState<DiagnosticIssue | null>(null);
   const [selectedOsForModal, setSelectedOsForModal] = useState<string>('windows');
   const [selectedCategoryForModal, setSelectedCategoryForModal] = useState<string>('');
+
+  const navigateToView = (view: AppView) => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const scrollToSection = (id: string) => {
     if (currentView !== 'home') {
@@ -58,14 +67,16 @@ export default function App() {
     setIsContactModalOpen(true);
   };
 
-  const handleNavigateCareers = () => {
-    setCurrentView('careers');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleTicketCreated = (ticketId: string) => {
+    setActiveTrackTicketId(ticketId);
+    navigateToView('track');
   };
 
-  const handleBackToHome = () => {
-    setCurrentView('home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleOpenCustomerTracker = (ticketId?: string) => {
+    if (ticketId) {
+      setActiveTrackTicketId(ticketId);
+    }
+    navigateToView('track');
   };
 
   return (
@@ -73,26 +84,75 @@ export default function App() {
       
       {/* 1-Row 3-Zone Top Navigation Bar */}
       <Navbar
+        currentView={currentView}
+        onNavigateView={navigateToView}
         onOpenContact={handleOpenGeneralContact}
         onOpenDnsGuide={() => setIsDnsGuideOpen(true)}
         onScrollToSection={scrollToSection}
-        onNavigateCareers={handleNavigateCareers}
-        currentView={currentView}
       />
 
       {/* Cloudflare DNS & Domain Live Status Bar */}
       <CloudflareBadge onOpenGuide={() => setIsDnsGuideOpen(true)} />
 
       {/* Main View Router */}
-      {currentView === 'careers' ? (
+      {currentView === 'book' ? (
         <main className="flex-1">
-          <CareersPage onBackToHome={handleBackToHome} />
+          <BookingWizard
+            onTicketCreated={handleTicketCreated}
+            onCancel={() => navigateToView('home')}
+          />
+        </main>
+      ) : currentView === 'track' ? (
+        <main className="flex-1">
+          <TicketTracker
+            initialTicketId={activeTrackTicketId}
+            onBookNew={() => navigateToView('book')}
+            onSwitchToConsole={() => navigateToView('console')}
+          />
+        </main>
+      ) : currentView === 'console' ? (
+        <main className="flex-1">
+          <TechnicianConsole
+            onOpenCustomerTracker={handleOpenCustomerTracker}
+            onBackToHome={() => navigateToView('home')}
+          />
+        </main>
+      ) : currentView === 'careers' ? (
+        <main className="flex-1">
+          <CareersPage onBackToHome={() => navigateToView('home')} />
         </main>
       ) : (
         <main className="flex-1">
+          {/* Quick MVP Test Callout Bar */}
+          <div className="border-b border-cyan-500/20 bg-cyan-950/20 py-2.5 text-xs">
+            <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-2 text-cyan-300 font-medium">
+                <Zap className="h-3.5 w-3.5 text-cyan-400" />
+                <span>
+                  <strong>Remotfix MVP Testing Active:</strong> Try the live booking flow and 1-click remote session room.
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigateToView('book')}
+                  className="text-white hover:text-cyan-300 underline underline-offset-4 cursor-pointer font-semibold"
+                >
+                  Book Test Session &rarr;
+                </button>
+                <span className="text-slate-600">|</span>
+                <button
+                  onClick={() => navigateToView('console')}
+                  className="text-amber-300 hover:text-amber-200 underline underline-offset-4 cursor-pointer font-semibold"
+                >
+                  Staff Console &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Hero & Waitlist Section */}
           <Hero
-            onOpenDiagnostic={() => scrollToSection('diagnostic')}
+            onOpenDiagnostic={() => navigateToView('book')}
             onOpenContact={() => scrollToSection('contact')}
           />
 
@@ -121,7 +181,7 @@ export default function App() {
       <Footer
         onOpenDnsGuide={() => setIsDnsGuideOpen(true)}
         onOpenContact={() => scrollToSection('contact')}
-        onNavigateCareers={handleNavigateCareers}
+        onNavigateView={navigateToView}
       />
 
       {/* Modals */}
@@ -138,19 +198,27 @@ export default function App() {
         prefilledCategory={selectedCategoryForModal}
       />
 
-      {/* Mobile Floating Quick-Action Bar */}
-      <div className="fixed bottom-4 right-4 z-40 sm:hidden">
-        <button
-          onClick={handleOpenGeneralContact}
-          className="flex items-center gap-2 rounded-full bg-cyan-400 px-4 py-2.5 text-xs font-bold text-black shadow-xl shadow-black/50 cursor-pointer"
-          aria-label="Quick Support Contact"
-        >
-          <MessageSquare className="h-4 w-4" />
-          <span>Support</span>
-        </button>
+      {/* Testing Role Switcher Floating Control (Bottom Right) */}
+      <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2">
+        {currentView === 'console' ? (
+          <button
+            onClick={() => navigateToView('track')}
+            className="flex items-center gap-2 rounded-full border border-cyan-400/40 bg-black/90 px-4 py-2.5 text-xs font-bold text-cyan-300 shadow-2xl backdrop-blur-md hover:bg-black transition-colors cursor-pointer"
+          >
+            <Activity className="h-4 w-4 text-cyan-400" />
+            <span>Switch to Customer Room</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => navigateToView('console')}
+            className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-black/90 px-4 py-2.5 text-xs font-bold text-amber-300 shadow-2xl backdrop-blur-md hover:bg-black transition-colors cursor-pointer"
+          >
+            <UserCheck className="h-4 w-4 text-amber-400" />
+            <span>Staff Console (Suraj)</span>
+          </button>
+        )}
       </div>
 
     </div>
   );
 }
-

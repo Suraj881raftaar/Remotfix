@@ -1,25 +1,37 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Menu, X, ArrowUpRight, Cpu } from 'lucide-react';
+import { ShieldCheck, Menu, X, ArrowUpRight, Cpu, Activity, UserCheck, Zap, Laptop } from 'lucide-react';
+
+export type AppView = 'home' | 'book' | 'track' | 'console' | 'careers';
 
 interface NavbarProps {
+  currentView: AppView;
+  onNavigateView: (view: AppView) => void;
   onOpenContact: () => void;
   onOpenDnsGuide: () => void;
   onScrollToSection: (id: string) => void;
-  onNavigateCareers: () => void;
-  currentView: 'home' | 'careers';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  currentView,
+  onNavigateView,
   onOpenContact,
   onOpenDnsGuide,
-  onScrollToSection,
-  onNavigateCareers,
-  currentView
+  onScrollToSection
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleNavClick = (id: string) => {
-    onScrollToSection(id);
+    if (currentView !== 'home') {
+      onNavigateView('home');
+      setTimeout(() => onScrollToSection(id), 100);
+    } else {
+      onScrollToSection(id);
+    }
+    setMobileMenuOpen(false);
+  };
+
+  const handleSwitchView = (view: AppView) => {
+    onNavigateView(view);
     setMobileMenuOpen(false);
   };
 
@@ -30,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Zone 1: Single text element wordmark */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => handleNavClick('waitlist')}
+            onClick={() => handleSwitchView('home')}
             className="flex items-center gap-2 text-xl font-bold tracking-tight text-white transition-opacity hover:opacity-90 font-display cursor-pointer"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-black">
@@ -43,27 +55,51 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Zone 2: 4-6 clean text navigation links */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
           <button
-            onClick={() => handleNavClick('services')}
-            className="transition-colors hover:text-white cursor-pointer"
+            onClick={() => handleSwitchView('home')}
+            className={`transition-colors cursor-pointer ${
+              currentView === 'home' ? 'text-white font-bold' : 'hover:text-white text-slate-300'
+            }`}
           >
-            Services
+            Overview
           </button>
+          
           <button
-            onClick={() => handleNavClick('diagnostic')}
-            className="transition-colors hover:text-white cursor-pointer"
+            onClick={() => handleSwitchView('book')}
+            className={`transition-colors cursor-pointer flex items-center gap-1.5 ${
+              currentView === 'book' ? 'text-cyan-400 font-bold' : 'hover:text-white text-slate-300'
+            }`}
           >
-            Instant Estimator
+            <Zap className="h-3.5 w-3.5 text-cyan-400" />
+            <span>Book Diagnostic</span>
           </button>
+
           <button
-            onClick={() => handleNavClick('security')}
-            className="transition-colors hover:text-white cursor-pointer"
+            onClick={() => handleSwitchView('track')}
+            className={`transition-colors cursor-pointer flex items-center gap-1.5 ${
+              currentView === 'track' ? 'text-cyan-400 font-bold' : 'hover:text-white text-slate-300'
+            }`}
           >
-            Security & Privacy
+            <Activity className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Track Room</span>
           </button>
+
           <button
-            onClick={onNavigateCareers}
+            onClick={() => handleSwitchView('console')}
+            className={`transition-colors cursor-pointer flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${
+              currentView === 'console'
+                ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold'
+                : 'text-amber-300/80 hover:text-amber-200 border border-amber-400/20 bg-amber-400/5'
+            }`}
+            title="Switch to Technician / Staff Operations Console"
+          >
+            <UserCheck className="h-3.5 w-3.5 text-amber-400" />
+            <span>Tech Console</span>
+          </button>
+
+          <button
+            onClick={() => handleSwitchView('careers')}
             className={`transition-colors cursor-pointer flex items-center gap-1.5 ${
               currentView === 'careers' ? 'text-cyan-400 font-bold' : 'hover:text-white text-slate-300'
             }`}
@@ -71,35 +107,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Careers</span>
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
           </button>
-          <button
-            onClick={() => handleNavClick('faq')}
-            className="transition-colors hover:text-white cursor-pointer"
-          >
-            FAQ
-          </button>
+
           <button
             onClick={onOpenDnsGuide}
-            className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <ShieldCheck className="h-3.5 w-3.5 text-orange-400" />
-            <span>Cloudflare DNS</span>
+            <span>Cloudflare</span>
           </button>
         </nav>
-
 
         {/* Zone 3: Primary actions */}
         <div className="hidden sm:flex items-center gap-3">
           <button
-            onClick={onOpenContact}
-            className="text-xs font-medium text-slate-300 hover:text-white px-3.5 py-2 transition-colors cursor-pointer"
+            onClick={() => handleSwitchView('track')}
+            className="text-xs font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors cursor-pointer"
           >
-            Contact & Quote
+            Track Status
           </button>
           <button
-            onClick={() => handleNavClick('waitlist')}
+            onClick={() => handleSwitchView('book')}
             className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-black transition-all hover:bg-slate-200 cursor-pointer whitespace-nowrap shadow-sm hover:shadow-white/10"
           >
-            <span>Early Access</span>
+            <span>Book Fix Session</span>
             <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -119,51 +149,50 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile dropdown drawer */}
       {mobileMenuOpen && (
         <div className="border-b border-white/10 bg-[#0E111A] px-4 pt-3 pb-5 md:hidden">
-          <div className="flex flex-col gap-3 text-sm font-medium text-slate-300">
+          <div className="flex flex-col gap-2.5 text-sm font-medium text-slate-300">
             <button
-              onClick={() => handleNavClick('services')}
+              onClick={() => handleSwitchView('home')}
               className="text-left py-2 hover:text-white border-b border-white/5"
             >
-              Services & Capabilities
+              Overview & Services
             </button>
             <button
-              onClick={() => handleNavClick('diagnostic')}
-              className="text-left py-2 hover:text-white border-b border-white/5"
+              onClick={() => handleSwitchView('book')}
+              className="text-left py-2 text-cyan-400 font-bold border-b border-white/5 flex items-center justify-between"
             >
-              Instant Issue Estimator
+              <span>Book Diagnostic Session</span>
+              <span className="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">MVP</span>
             </button>
             <button
-              onClick={() => handleNavClick('security')}
-              className="text-left py-2 hover:text-white border-b border-white/5"
+              onClick={() => handleSwitchView('track')}
+              className="text-left py-2 text-emerald-400 font-bold border-b border-white/5 flex items-center justify-between"
             >
-              Security Protocol
+              <span>Track Ticket & Remote Room</span>
+              <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">Live</span>
             </button>
             <button
-              onClick={() => {
-                onNavigateCareers();
-                setMobileMenuOpen(false);
-              }}
-              className="text-left py-2 text-cyan-400 font-semibold border-b border-white/5 flex items-center justify-between"
+              onClick={() => handleSwitchView('console')}
+              className="text-left py-2 text-amber-300 font-bold border-b border-white/5 flex items-center justify-between"
+            >
+              <span>Technician Staff Console</span>
+              <span className="text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Staff</span>
+            </button>
+            <button
+              onClick={() => handleSwitchView('careers')}
+              className="text-left py-2 text-cyan-400 border-b border-white/5 flex items-center justify-between"
             >
               <span>Careers & Hiring</span>
-              <span className="text-[10px] bg-cyan-950 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded">Hiring</span>
+              <span className="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded">Hiring</span>
             </button>
-            <button
-              onClick={() => handleNavClick('faq')}
-              className="text-left py-2 hover:text-white border-b border-white/5"
-            >
-              FAQ
-            </button>
-
             <button
               onClick={() => {
                 onOpenDnsGuide();
                 setMobileMenuOpen(false);
               }}
-              className="text-left py-2 text-amber-300 hover:text-amber-200 border-b border-white/5 flex items-center gap-2"
+              className="text-left py-2 text-orange-400 border-b border-white/5 flex items-center gap-2"
             >
-              <ShieldCheck className="h-4 w-4 text-orange-400" />
-              <span>Cloudflare DNS Management Guide</span>
+              <ShieldCheck className="h-4 w-4" />
+              <span>Cloudflare DNS Guide</span>
             </button>
             <div className="pt-2 flex flex-col gap-2">
               <button
@@ -176,10 +205,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Direct Support & Quote
               </button>
               <button
-                onClick={() => handleNavClick('waitlist')}
+                onClick={() => handleSwitchView('book')}
                 className="w-full rounded-lg bg-white py-2.5 text-center text-xs font-semibold text-black hover:bg-slate-200"
               >
-                Join Launch Waitlist (30% Off)
+                Launch Diagnostic Booking
               </button>
             </div>
           </div>

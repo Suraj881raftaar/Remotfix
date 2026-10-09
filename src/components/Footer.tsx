@@ -4,13 +4,13 @@ import { Cpu, ShieldCheck, Globe, Mail } from 'lucide-react';
 interface FooterProps {
   onOpenDnsGuide: () => void;
   onOpenContact: () => void;
-  onNavigateCareers: () => void;
+  onNavigateView: (view: 'home' | 'book' | 'track' | 'console' | 'careers') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ 
   onOpenDnsGuide, 
   onOpenContact,
-  onNavigateCareers
+  onNavigateView
 }) => {
   return (
     <footer className="border-t border-white/10 bg-[#06080D] text-xs text-slate-400">
@@ -20,14 +20,17 @@ export const Footer: React.FC<FooterProps> = ({
           
           {/* Col 1: Brand & Domain Summary */}
           <div className="md:col-span-5 space-y-4">
-            <a href="/" className="flex items-center gap-2 font-display text-lg font-bold text-white">
+            <button
+              onClick={() => onNavigateView('home')}
+              className="flex items-center gap-2 font-display text-lg font-bold text-white cursor-pointer"
+            >
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-black">
                 <Cpu className="h-4 w-4" />
               </div>
               <span>
                 remotfix<span className="text-cyan-400">.in</span>
               </span>
-            </a>
+            </button>
             <p className="max-w-sm text-xs text-slate-400 leading-relaxed">
               On-demand remote IT support, computer troubleshooting, virus eradication, and operating system diagnostics across global networks.
             </p>
@@ -41,15 +44,35 @@ export const Footer: React.FC<FooterProps> = ({
 
           {/* Col 2: Services & Links */}
           <div className="md:col-span-3 space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white">Platform & Company</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-white">MVP Portals</h4>
             <ul className="space-y-1.5 text-slate-400">
-              <li><a href="#services" className="hover:text-white transition-colors">Remote Diagnostic Screen Share</a></li>
-              <li><a href="#services" className="hover:text-white transition-colors">Virus & Malware Eradication</a></li>
-              <li><a href="#services" className="hover:text-white transition-colors">Windows & Mac Optimization</a></li>
-              <li><a href="#diagnostic" className="hover:text-white transition-colors">Instant Issue Estimator</a></li>
               <li>
                 <button
-                  onClick={onNavigateCareers}
+                  onClick={() => onNavigateView('book')}
+                  className="hover:text-cyan-400 transition-colors cursor-pointer text-left font-medium"
+                >
+                  Book Remote Diagnostic (MVP)
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigateView('track')}
+                  className="hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                >
+                  Track Session Room (Live)
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigateView('console')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left"
+                >
+                  Staff Operations Console
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigateView('careers')}
                   className="text-cyan-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <span>Careers (We're Hiring)</span>
@@ -58,6 +81,7 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
             </ul>
           </div>
+
 
 
           {/* Col 3: Direct Contact */}

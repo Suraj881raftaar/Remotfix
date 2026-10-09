@@ -8,7 +8,6 @@ export interface DiagnosticIssue {
   typicalSteps: string[];
 }
 
-
 export interface WaitlistSubmission {
   email: string;
   os: string;
@@ -29,4 +28,42 @@ export interface SupportInquiry {
   description: string;
   timestamp: string;
   status: 'Received' | 'Queued' | 'Assigned';
+}
+
+export type TicketStatus =
+  | 'received'
+  | 'assigned'
+  | 'connecting'
+  | 'in_session'
+  | 'resolved'
+  | 'cancelled';
+
+export type RemoteTool = 'quick_assist' | 'anydesk' | 'browser';
+
+export interface TicketChatMessage {
+  id: string;
+  sender: 'customer' | 'technician' | 'system';
+  text: string;
+  timestamp: string;
+}
+
+export interface Ticket {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  os: string;
+  category: string;
+  urgency: 'Standard' | 'Priority' | 'Emergency';
+  timing: 'immediate' | 'scheduled';
+  scheduledTime?: string;
+  description: string;
+  status: TicketStatus;
+  assignedTechnician?: string;
+  preferredTool: RemoteTool;
+  sessionCode?: string;
+  resolutionSummary?: string;
+  messages: TicketChatMessage[];
+  createdAt: string;
+  updatedAt: string;
 }
