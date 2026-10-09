@@ -18,10 +18,13 @@ import {
   X,
   PlusCircle,
   Copy,
-  Check
+  Check,
+  Mail,
+  Bell
 } from 'lucide-react';
 import { Ticket, TicketStatus, RemoteTool } from '../types';
 import { ticketStore } from '../services/ticketStore';
+import { EmailNotificationModal } from './EmailNotificationModal';
 
 interface TechnicianConsoleProps {
   onOpenCustomerTracker: (ticketId: string) => void;
@@ -42,6 +45,7 @@ export const TechnicianConsole: React.FC<TechnicianConsoleProps> = ({
   const [customPin, setCustomPin] = useState('');
   const [resolutionNote, setResolutionNote] = useState('');
   const [copiedId, setCopiedId] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = ticketStore.subscribe((updated) => {
@@ -275,6 +279,13 @@ export const TechnicianConsole: React.FC<TechnicianConsoleProps> = ({
                       <span>View as Customer</span>
                       <ExternalLink className="h-3 w-3" />
                     </button>
+                    <button
+                      onClick={() => setIsEmailModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-[11px] text-amber-300 hover:underline cursor-pointer ml-1"
+                    >
+                      <Bell className="h-3 w-3 text-amber-400" />
+                      <span>Inbound Alert (support@remotfix.in)</span>
+                    </button>
                   </div>
                   <h3 className="font-display text-lg font-bold text-white mt-1">
                     {activeTicket.customerName}
@@ -416,6 +427,16 @@ export const TechnicianConsole: React.FC<TechnicianConsoleProps> = ({
         </div>
 
       </div>
+
+      {/* Admin Email Notification Inspector Modal */}
+      {activeTicket && (
+        <EmailNotificationModal
+          isOpen={isEmailModalOpen}
+          onClose={() => setIsEmailModalOpen(false)}
+          ticket={activeTicket}
+          defaultTab="admin"
+        />
+      )}
 
     </div>
   );

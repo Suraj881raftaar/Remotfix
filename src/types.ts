@@ -47,6 +47,17 @@ export interface TicketChatMessage {
   timestamp: string;
 }
 
+export interface DispatchedEmail {
+  id: string;
+  recipient: string;
+  recipientRole: 'customer' | 'admin';
+  from: string;
+  subject: string;
+  sentAt: string;
+  previewText: string;
+  htmlBody: string;
+}
+
 export interface Ticket {
   id: string;
   customerName: string;
@@ -64,6 +75,8 @@ export interface Ticket {
   sessionCode?: string;
   resolutionSummary?: string;
   messages: TicketChatMessage[];
+  emails?: DispatchedEmail[];
   createdAt: string;
   updatedAt: string;
 }
+

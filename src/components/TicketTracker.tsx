@@ -10,16 +10,19 @@ import {
   Monitor, 
   Download, 
   AlertCircle, 
-  RefreshCw,
-  Search,
-  ExternalLink,
-  ChevronRight,
-  UserCheck,
-  Zap,
-  Lock
+  RefreshCw, 
+  Search, 
+  ExternalLink, 
+  ChevronRight, 
+  UserCheck, 
+  Zap, 
+  Lock,
+  Mail,
+  Bell
 } from 'lucide-react';
 import { Ticket, TicketStatus, RemoteTool } from '../types';
 import { ticketStore } from '../services/ticketStore';
+import { EmailNotificationModal } from './EmailNotificationModal';
 
 interface TicketTrackerProps {
   initialTicketId?: string;
@@ -40,6 +43,8 @@ export const TicketTracker: React.FC<TicketTrackerProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [activeToolTab, setActiveToolTab] = useState<RemoteTool>('quick_assist');
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailModalDefaultTab, setEmailModalDefaultTab] = useState<'customer' | 'admin'>('customer');
 
   useEffect(() => {
     const unsubscribe = ticketStore.subscribe((updated) => {
@@ -313,11 +318,24 @@ Support Hotline: support@remotfix.in
                   </div>
                 </div>
 
-                <div className="text-right font-mono text-[11px] text-slate-400">
-                  <span>Contact: </span>
-                  <a href="mailto:suraj@remotfix.in" className="text-amber-300 hover:underline">
-                    suraj@remotfix.in
-                  </a>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setEmailModalDefaultTab('customer');
+                      setIsEmailModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-950/40 hover:bg-cyan-950/70 px-3 py-1.5 text-xs text-cyan-300 font-medium transition-colors cursor-pointer"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    <span>View Dispatched Emails (2)</span>
+                  </button>
+
+                  <div className="text-right font-mono text-[11px] text-slate-400">
+                    <span>Contact: </span>
+                    <a href="mailto:suraj@remotfix.in" className="text-amber-300 hover:underline">
+                      suraj@remotfix.in
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -581,11 +599,35 @@ Support Hotline: support@remotfix.in
                 <span className="text-slate-500">Scheduled:</span>
                 <span className="text-slate-200">{currentTicket.scheduledTime || 'Immediate Connection'}</span>
               </div>
+
+              <div className="pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailModalDefaultTab('customer');
+                    setIsEmailModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-950/30 hover:bg-cyan-950/60 py-2 text-xs font-semibold text-cyan-300 transition-colors cursor-pointer"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>Inspect Dispatched Emails</span>
+                </button>
+              </div>
             </div>
 
           </div>
 
         </div>
+      )}
+
+      {/* Automated Email Notification Modal */}
+      {currentTicket && (
+        <EmailNotificationModal
+          isOpen={isEmailModalOpen}
+          onClose={() => setIsEmailModalOpen(false)}
+          ticket={currentTicket}
+          defaultTab={emailModalDefaultTab}
+        />
       )}
 
     </div>

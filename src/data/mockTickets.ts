@@ -1,6 +1,8 @@
 import { Ticket } from '../types';
+import { generateCustomerConfirmationEmail, generateAdminNotificationEmail } from '../services/emailNotificationService';
 
-export const INITIAL_MOCK_TICKETS: Ticket[] = [
+const RAW_MOCK_TICKETS: Ticket[] = [
+
   {
     id: 'RF-41820',
     customerName: 'Marcus Vance',
@@ -107,3 +109,9 @@ export const INITIAL_MOCK_TICKETS: Ticket[] = [
     updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString()
   }
 ];
+
+export const INITIAL_MOCK_TICKETS: Ticket[] = RAW_MOCK_TICKETS.map((t) => ({
+  ...t,
+  emails: [generateCustomerConfirmationEmail(t), generateAdminNotificationEmail(t)]
+}));
+

@@ -1,7 +1,9 @@
-import { Ticket, TicketStatus, RemoteTool, TicketChatMessage } from '../types';
+import { Ticket, TicketStatus, RemoteTool, TicketChatMessage, DispatchedEmail } from '../types';
 import { INITIAL_MOCK_TICKETS } from '../data/mockTickets';
+import { generateCustomerConfirmationEmail, generateAdminNotificationEmail } from './emailNotificationService';
 
 const STORAGE_KEY = 'remotfix_mvp_tickets_v1';
+
 
 type Listener = (tickets: Ticket[]) => void;
 const listeners: Set<Listener> = new Set();
@@ -12,7 +14,15 @@ function loadTickets(): Ticket[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return parsed.map((t: Ticket) => {
+          if (!t.emails || t.emails.length === 0) {
+            return {
+              ...t,
+              emails: [generateCustomerConfirmationEmail(t), generateAdminNotificationEmail(t)]
+            };
+          }
+          return t;
+        });
       }
     }
   } catch (err) {
@@ -68,7 +78,7 @@ export const ticketStore = {
     preferredTool?: RemoteTool;
   }): Ticket {
     const randomId = Math.floor(10000 + Math.random() * 90000);
-    const newTicket: Ticket = {
+    const tempTicket: Ticket = {
       id: `RF-${randomId}`,
       customerName: data.customerName,
       customerEmail: data.customerEmail,
@@ -88,15 +98,31 @@ export const ticketStore = {
           sender: 'system',
           text: `Ticket RF-${randomId} logged. Assigned to automated priority dispatch.`,
           timestamp: new Date().toISOString()
+        },
+        {
+          id: `msg-${Date.now() + 1}`,
+          sender: 'system',
+          text: `Automated confirmation sent to ${data.customerEmail}. Dispatch alert sent to support@remotfix.in.`,
+          timestamp: new Date().toISOString()
         }
       ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
+    // Generate real email notification records
+    const custEmail = generateCustomerConfirmationEmail(tempTicket);
+    const adminEmail = generateAdminNotificationEmail(tempTicket);
+
+    const newTicket: Ticket = {
+      ...tempTicket,
+      emails: [custEmail, adminEmail]
+    };
+
     currentTickets = [newTicket, ...currentTickets];
     notify();
     return newTicket;
+
   },
 
   updateStatus(id: string, status: TicketStatus, resolutionSummary?: string) {

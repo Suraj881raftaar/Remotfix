@@ -100,6 +100,7 @@ export default function App() {
           <BookingWizard
             onTicketCreated={handleTicketCreated}
             onCancel={() => navigateToView('home')}
+            onNavigateToConsole={() => navigateToView('console')}
           />
         </main>
       ) : currentView === 'track' ? (
