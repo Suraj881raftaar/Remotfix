@@ -10,24 +10,20 @@ import {
   Calendar, 
   Clock, 
   ShieldCheck, 
-  AlertCircle,
-  Sparkles,
-  Zap,
-  Mail,
-  Send,
-  Bell,
-  Copy,
-  Check,
-  ExternalLink,
-  Download,
-  Eye,
-  FileText,
-  AlertTriangle,
-  RotateCcw,
-  UserCheck
+  Sparkles, 
+  Zap, 
+  Mail, 
+  Send, 
+  Bell, 
+  Check, 
+  RotateCcw, 
+  UserCheck, 
+  X,
+  ExternalLink
 } from 'lucide-react';
 import { ticketStore } from '../services/ticketStore';
-import { RemoteTool, Ticket, DispatchedEmail } from '../types';
+import { RemoteTool, Ticket } from '../types';
+import { EmailTemplates } from './EmailTemplates';
 
 interface BookingWizardProps {
   onTicketCreated: (ticketId: string) => void;
@@ -58,11 +54,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
-
-  // Email Viewer inside completion state
-  const [activeEmailTab, setActiveEmailTab] = useState<'customer' | 'admin'>('customer');
-  const [emailViewMode, setEmailViewMode] = useState<'formatted' | 'raw'>('formatted');
-  const [copiedEmailText, setCopiedEmailText] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const categories = [
     { title: 'Blue Screen (BSOD) / Fatal Crashes', desc: 'Driver crash dumps, memory panic, sudden reboots' },
@@ -99,10 +91,11 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
       setIsSubmitting(false);
       setCreatedTicket(ticket);
       setStep(4);
+      setIsSuccessModalOpen(true);
 
       try {
         confetti({
-          particleCount: 85,
+          particleCount: 90,
           spread: 85,
           origin: { y: 0.55 }
         });
@@ -112,34 +105,12 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
     }, 600);
   };
 
-  const handleCopyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedEmailText(true);
-    setTimeout(() => setCopiedEmailText(false), 2000);
-  };
-
-  const handleDownloadEmail = (email: DispatchedEmail) => {
-    if (!createdTicket) return;
-    const blob = new Blob([email.htmlBody], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `remotfix-notification-${email.recipientRole}-${createdTicket.id}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const generateMailto = (email: DispatchedEmail) => {
-    return `mailto:${email.recipient}?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.htmlBody)}`;
-  };
-
   const handleResetBooking = () => {
     setCreatedTicket(null);
     setDescription('');
+    setIsSuccessModalOpen(false);
     setStep(1);
   };
-
-  const activeEmail = createdTicket?.emails?.find((e) => e.recipientRole === activeEmailTab);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
@@ -531,7 +502,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
         </form>
       )}
 
-      {/* STEP 4: AUTOMATED EMAIL NOTIFICATION MOCK-UP TRIGGER VIEW */}
+      {/* STEP 4: ON-PAGE CONFIRMATION SUMMARY */}
       {step === 4 && createdTicket && (
         <div className="space-y-6 animate-fade-in">
           
@@ -545,7 +516,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
-                      Booking Confirmed · Automated Notifications Triggered
+                      Booking Confirmed · Dispatch Notice Sent
                     </span>
                   </div>
                   <h2 className="mt-0.5 font-display text-2xl sm:text-3xl font-black text-white">
@@ -565,12 +536,8 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
               
               {/* Customer Notification Status */}
               <div 
-                onClick={() => setActiveEmailTab('customer')}
-                className={`rounded-xl border p-4 cursor-pointer transition-all ${
-                  activeEmailTab === 'customer'
-                    ? 'border-cyan-400 bg-cyan-950/40 shadow-lg shadow-cyan-400/10'
-                    : 'border-white/10 bg-white/5 hover:border-white/20'
-                }`}
+                onClick={() => setIsSuccessModalOpen(true)}
+                className="rounded-xl border border-white/10 bg-white/5 p-4 cursor-pointer hover:border-cyan-400 hover:bg-cyan-950/20 transition-all"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2 text-cyan-300 font-bold">
@@ -578,373 +545,86 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                     <span>Customer Receipt Dispatched</span>
                   </div>
                   <span className="rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-mono px-2 py-0.5 border border-emerald-500/30">
-                    SENT
+                    DELIVERED
                   </span>
                 </div>
                 <div className="font-mono text-slate-300 text-[11px] truncate">
-                  To: <strong>{createdTicket.customerEmail}</strong>
+                  Sent to: <strong>{createdTicket.customerEmail}</strong>
                 </div>
                 <p className="mt-1.5 text-[11px] text-slate-400 leading-relaxed">
                   Confirms support request has been received with Ticket #{createdTicket.id}, checklist, and session room link.
                 </p>
                 <div className="mt-2 text-[10px] text-cyan-400 font-semibold flex items-center gap-1">
-                  <span>View Customer Email Mock-Up below</span>
+                  <span>Click to view visual email mockup</span>
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
 
               {/* Admin Notification Status (support@remotfix.in) */}
               <div 
-                onClick={() => setActiveEmailTab('admin')}
-                className={`rounded-xl border p-4 cursor-pointer transition-all ${
-                  activeEmailTab === 'admin'
-                    ? 'border-amber-400 bg-amber-950/40 shadow-lg shadow-amber-400/10'
-                    : 'border-white/10 bg-white/5 hover:border-white/20'
-                }`}
+                onClick={() => setIsSuccessModalOpen(true)}
+                className="rounded-xl border border-white/10 bg-white/5 p-4 cursor-pointer hover:border-amber-400 hover:bg-amber-950/20 transition-all"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2 text-amber-300 font-bold">
                     <Bell className="h-4 w-4 text-amber-400" />
-                    <span>Admin Request Notification Dispatched</span>
+                    <span>Admin Request Dispatched</span>
                   </div>
                   <span className="rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono px-2 py-0.5 border border-amber-500/30">
-                    SENT
+                    DELIVERED
                   </span>
                 </div>
                 <div className="font-mono text-slate-300 text-[11px] truncate">
-                  To: <strong>support@remotfix.in</strong> <span className="text-slate-500">(CC: suraj@remotfix.in)</span>
+                  Sent to: <strong>support@remotfix.in</strong> <span className="text-slate-500">(CC: suraj@remotfix.in)</span>
                 </div>
                 <p className="mt-1.5 text-[11px] text-slate-400 leading-relaxed">
                   Urgent technician dispatch alert notifying team of new {createdTicket.urgency} triage request on remotfix.in.
                 </p>
                 <div className="mt-2 text-[10px] text-amber-400 font-semibold flex items-center gap-1">
-                  <span>View Admin Alert Mock-Up below</span>
+                  <span>Click to view support@remotfix.in alert mockup</span>
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
 
             </div>
+
+            {/* Re-Open Success Modal Quick Trigger */}
+            <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <span className="text-slate-300 text-xs">
+                Want to inspect the exact emails delivered to your inbox and <strong>support@remotfix.in</strong>?
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-950/40 hover:bg-cyan-950/80 px-3.5 py-1.5 font-semibold text-cyan-300 transition-colors cursor-pointer"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                <span>Open Email Mockup Modal</span>
+              </button>
+            </div>
           </div>
 
-          {/* Interactive Automated Email Notification Mock-Up Container */}
-          <div className="rounded-2xl border border-white/20 bg-[#0E111A] shadow-2xl overflow-hidden">
-            
-            {/* Mock-Up Subheader Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-black/60 px-5 py-3.5 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-500/30">
-                  <Mail className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-white text-xs sm:text-sm">
-                    Automated Email Notification Inspector
-                  </h3>
-                  <span className="text-[10px] text-slate-400">
-                    Live payload dispatched upon BookingWizard completion
-                  </span>
-                </div>
+          {/* Embedded EmailTemplates View directly on the page */}
+          <div className="rounded-2xl border border-white/15 bg-black/50 p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider">
+                  Dispatched Email Templates
+                </h3>
+                <span className="text-[11px] text-slate-400">
+                  Visual mockups rendered by EmailTemplates component
+                </span>
               </div>
-
-              {/* Tab Selector Buttons */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveEmailTab('customer')}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                    activeEmailTab === 'customer'
-                      ? 'bg-cyan-400 text-black shadow-md shadow-cyan-400/20'
-                      : 'text-slate-400 hover:text-white bg-white/5'
-                  }`}
-                >
-                  Customer Email ({createdTicket.customerEmail})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveEmailTab('admin')}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                    activeEmailTab === 'admin'
-                      ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
-                      : 'text-slate-400 hover:text-white bg-white/5'
-                  }`}
-                >
-                  Admin Alert (support@remotfix.in)
-                </button>
-              </div>
-
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 rounded-lg bg-black/80 p-1 border border-white/10 text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => setEmailViewMode('formatted')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 transition-colors cursor-pointer ${
-                    emailViewMode === 'formatted'
-                      ? 'bg-white/20 text-white font-semibold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Eye className="h-3 w-3" />
-                  <span>Formatted</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEmailViewMode('raw')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 transition-colors cursor-pointer ${
-                    emailViewMode === 'raw'
-                      ? 'bg-white/20 text-white font-semibold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <FileText className="h-3 w-3" />
-                  <span>Raw Text</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(true)}
+                className="text-xs text-cyan-400 hover:underline cursor-pointer"
+              >
+                Expand in Focus Modal &rarr;
+              </button>
             </div>
 
-            {/* Email Body Inspector Display */}
-            <div className="p-4 sm:p-6">
-              {activeEmail ? (
-                <div className="rounded-xl border border-white/15 bg-black/80 overflow-hidden font-sans shadow-lg">
-                  
-                  {/* Email Metadata Envelope Header */}
-                  <div className="border-b border-white/10 bg-white/[0.03] p-4 text-xs space-y-2.5 font-mono">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500">From:</span>
-                        <span className="text-white font-semibold">{activeEmail.from}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                        <Clock className="h-3 w-3" />
-                        <span>{new Date(activeEmail.sentAt).toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500">To:</span>
-                        <span className="text-cyan-400 font-bold">{activeEmail.recipient}</span>
-                      </div>
-                      {activeEmail.recipientRole === 'admin' ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded font-mono border border-amber-400/30">
-                            CC: suraj@remotfix.in (Founder)
-                          </span>
-                          <span className="text-[10px] bg-cyan-400/20 text-cyan-300 px-2 py-0.5 rounded font-mono border border-cyan-400/30">
-                            support@remotfix.in
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-mono border border-emerald-400/30">
-                          Delivered to Customer Inbox
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-start gap-2 pt-0.5">
-                      <span className="text-slate-500 shrink-0">Subject:</span>
-                      <span className="text-white font-bold font-sans text-xs sm:text-sm">
-                        {activeEmail.subject}
-                      </span>
-                    </div>
-
-                    {/* Authentication Seals */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5 text-[10px] text-slate-400">
-                      <span className="flex items-center gap-1 text-emerald-400">
-                        <CheckCircle2 className="h-3 w-3" />
-                        <span>DKIM: PASS (remotfix.in)</span>
-                      </span>
-                      <span>·</span>
-                      <span className="flex items-center gap-1 text-emerald-400">
-                        <ShieldCheck className="h-3 w-3" />
-                        <span>SPF: PASS</span>
-                      </span>
-                      <span>·</span>
-                      <span className="text-slate-400">TLS 1.3 256-bit</span>
-                      <span>·</span>
-                      <span className="text-cyan-400">Cloudflare MX Relay</span>
-                    </div>
-                  </div>
-
-                  {/* Render Mode: Formatted or Raw */}
-                  {emailViewMode === 'formatted' ? (
-                    <div className="p-5 sm:p-7 space-y-5 text-slate-200 bg-gradient-to-b from-[#0B0F19] to-[#07090F]">
-                      
-                      {/* Remotfix Email Letterhead */}
-                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500 text-black font-extrabold font-mono text-sm">
-                            RF
-                          </div>
-                          <div>
-                            <div className="font-display font-black text-sm tracking-wide text-white">
-                              REMOTFIX<span className="text-cyan-400">.IN</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              On-Demand Remote IT Support & Troubleshooting
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Reference</span>
-                          <span className="font-mono text-xs font-bold text-cyan-400">#{createdTicket.id}</span>
-                        </div>
-                      </div>
-
-                      {/* Header Notification Message */}
-                      {activeEmailTab === 'customer' ? (
-                        <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-4 space-y-1.5">
-                          <div className="flex items-center gap-2 text-cyan-300 font-bold text-sm">
-                            <CheckCircle2 className="h-4 w-4 text-cyan-400" />
-                            <span>Your Support Request Has Been Received</span>
-                          </div>
-                          <p className="text-xs text-slate-300 leading-relaxed">
-                            Hi <strong>{createdTicket.customerName}</strong>, thank you for booking remote assistance on Remotfix. We have received your technical inquiry for Ticket <strong>#{createdTicket.id}</strong>. A certified senior technician is reviewing your diagnosis.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-4 space-y-1.5">
-                          <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
-                            <AlertTriangle className="h-4 w-4 text-amber-400" />
-                            <span>⚡ Urgent Inbound Diagnostic Request (support@remotfix.in)</span>
-                          </div>
-                          <p className="text-xs text-slate-300 leading-relaxed">
-                            New customer booking alert dispatched to <strong>support@remotfix.in</strong> (CC: suraj@remotfix.in). 
-                            Customer <strong>{createdTicket.customerName}</strong> requested triage under <strong>{createdTicket.urgency.toUpperCase()}</strong> priority.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Data Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 space-y-1">
-                          <span className="text-slate-500 text-[10px] uppercase font-mono block">Ticket Reference</span>
-                          <span className="text-white font-bold font-mono">{createdTicket.id}</span>
-                        </div>
-
-                        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 space-y-1">
-                          <span className="text-slate-500 text-[10px] uppercase font-mono block">Priority SLA</span>
-                          <span className="font-mono text-xs font-bold text-cyan-300 uppercase">{createdTicket.urgency}</span>
-                        </div>
-
-                        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 space-y-1">
-                          <span className="text-slate-500 text-[10px] uppercase font-mono block">Device / OS</span>
-                          <span className="text-white font-semibold">{createdTicket.os}</span>
-                        </div>
-
-                        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 space-y-1">
-                          <span className="text-slate-500 text-[10px] uppercase font-mono block">Connection Method</span>
-                          <span className="text-cyan-300 font-semibold">
-                            {createdTicket.preferredTool === 'quick_assist' ? 'Microsoft Quick Assist (Win+Ctrl+Q)' : 'AnyDesk'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Issue Description */}
-                      <div className="rounded-xl border border-white/10 bg-black/50 p-4 space-y-1.5">
-                        <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider block">
-                          Reported Symptom:
-                        </span>
-                        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans bg-white/[0.02] p-3 rounded border border-white/5">
-                          {createdTicket.description}
-                        </p>
-                      </div>
-
-                      {/* Customer Contact Details (Admin View) */}
-                      {activeEmailTab === 'admin' && (
-                        <div className="rounded-xl border border-amber-500/30 bg-black/60 p-4 text-xs font-mono space-y-1.5">
-                          <span className="text-amber-400 font-bold uppercase tracking-wider block font-sans">
-                            Customer Profile:
-                          </span>
-                          <div>Name: <span className="text-white font-semibold">{createdTicket.customerName}</span></div>
-                          <div>Email: <span className="text-cyan-400 font-semibold">{createdTicket.customerEmail}</span></div>
-                          <div>Phone / WhatsApp: <span className="text-white">{createdTicket.customerPhone || 'Not specified'}</span></div>
-                          <div>Timing: <span className="text-amber-300">{createdTicket.scheduledTime || 'Immediate Queue'}</span></div>
-                        </div>
-                      )}
-
-                      {/* Next Steps Guidance */}
-                      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 text-xs space-y-2">
-                        <span className="text-white font-semibold uppercase tracking-wider text-[11px] block">
-                          {activeEmailTab === 'customer' ? 'Next Steps:' : 'Technician Dispatch Actions:'}
-                        </span>
-                        <ol className="list-decimal pl-4 space-y-1 text-slate-300">
-                          {activeEmailTab === 'customer' ? (
-                            <>
-                              <li>Keep your computer powered on and connected to Wi-Fi.</li>
-                              <li>Certified Lead Engineer (Suraj) will issue your 6-digit connection PIN.</li>
-                              <li>Track your ticket or enter your remote room anytime with the button below.</li>
-                            </>
-                          ) : (
-                            <>
-                              <li>Open Technician Console at <code className="text-cyan-300">https://remotfix.in/console</code>.</li>
-                              <li>Review reported error logs and prepare Quick Assist PIN or AnyDesk relay.</li>
-                              <li>Contact customer directly via <code className="text-amber-300">{createdTicket.customerEmail}</code> if triage notes required.</li>
-                            </>
-                          )}
-                        </ol>
-                      </div>
-
-                      {/* Signature */}
-                      <div className="border-t border-white/10 pt-4 text-xs text-slate-400 space-y-1">
-                        <p className="text-white font-semibold">
-                          {activeEmailTab === 'customer' ? 'Remotfix Automated Support Helpdesk' : 'Remotfix Automated Dispatch Engine'}
-                        </p>
-                        <p>Support Hotline: <a href="mailto:support@remotfix.in" className="text-cyan-400 hover:underline">support@remotfix.in</a> · Founder: <a href="mailto:suraj@remotfix.in" className="text-amber-300 hover:underline">suraj@remotfix.in</a></p>
-                      </div>
-
-                    </div>
-                  ) : (
-                    /* Raw RFC Text View */
-                    <div className="p-6 text-xs sm:text-sm leading-relaxed text-slate-200 whitespace-pre-wrap font-mono bg-gradient-to-b from-black/90 to-[#0A0D15]">
-                      {activeEmail.htmlBody}
-                    </div>
-                  )}
-
-                  {/* Inspector Action Bar */}
-                  <div className="border-t border-white/10 bg-black/60 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleCopyText(activeEmail.htmlBody)}
-                        className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs text-white transition-colors cursor-pointer"
-                      >
-                        {copiedEmailText ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                        <span>{copiedEmailText ? 'Copied' : 'Copy Email Body'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadEmail(activeEmail)}
-                        className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs text-white transition-colors cursor-pointer"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        <span>Download Text</span>
-                      </button>
-
-                      <a
-                        href={generateMailto(activeEmail)}
-                        className="flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-950/30 hover:bg-cyan-950/60 px-3 py-1.5 text-xs text-cyan-300 transition-colors"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        <span>Test in Native Client</span>
-                      </a>
-                    </div>
-
-                    <div className="text-[11px] text-slate-400 font-mono">
-                      Domain: <strong className="text-cyan-400">remotfix.in</strong>
-                    </div>
-                  </div>
-
-                </div>
-              ) : (
-                <div className="p-8 text-center text-xs text-slate-500">
-                  No email notification found.
-                </div>
-              )}
-            </div>
-
+            <EmailTemplates ticket={createdTicket} defaultTemplate="customer" />
           </div>
 
           {/* Primary Action Gate: Enter Remote Session Room */}
@@ -975,7 +655,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                   className="flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 px-4 py-2.5 text-xs font-semibold text-amber-300 transition-colors cursor-pointer"
                 >
                   <UserCheck className="h-3.5 w-3.5 text-amber-400" />
-                  <span>View Staff Console</span>
+                  <span>Staff Console (support@remotfix.in)</span>
                 </button>
               )}
 
@@ -990,6 +670,114 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* SUCCESS MODAL: CONFIRMING BOOKING WAS RECEIVED & EMAIL DISPATCHED TO SUPPORT@REMOTFIX.IN */}
+      {isSuccessModalOpen && createdTicket && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-4xl rounded-2xl border border-white/20 bg-[#0B0E17] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Top Header */}
+            <div className="flex items-start justify-between border-b border-white/10 px-5 sm:px-6 py-4 bg-black/75">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-black font-extrabold shadow-lg shadow-emerald-500/25">
+                  <Check className="h-6 w-6 stroke-[3]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display text-base sm:text-lg font-bold text-white">
+                      Booking Confirmed & Dispatched!
+                    </h3>
+                    <span className="rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-mono">
+                      #{createdTicket.id}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    Your support request has been received. An email notification has been dispatched to{' '}
+                    <strong className="text-amber-300 font-mono">support@remotfix.in</strong> (CC: suraj@remotfix.in) and a confirmation was sent to{' '}
+                    <strong className="text-cyan-300 font-mono">{createdTicket.customerEmail}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="rounded-lg p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Dispatched Notification Summary Callout Banner */}
+            <div className="bg-gradient-to-r from-emerald-950/40 via-cyan-950/20 to-black border-b border-white/10 px-5 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="font-medium">
+                  2 Automated Notifications Dispatched via Remotfix Engine
+                </span>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-[11px]">
+                <span className="text-cyan-300">✓ Customer Receipt</span>
+                <span className="text-slate-600">·</span>
+                <span className="text-amber-300">✓ support@remotfix.in Alert</span>
+              </div>
+            </div>
+
+            {/* Modal Body: Integrated EmailTemplates Component */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <EmailTemplates
+                ticket={createdTicket}
+                defaultTemplate="customer"
+                showControls={true}
+              />
+            </div>
+
+            {/* Modal Action Footer */}
+            <div className="border-t border-white/10 bg-black/75 px-5 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 font-medium text-slate-300 transition-colors cursor-pointer"
+              >
+                Close Modal
+              </button>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                {onNavigateToConsole && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSuccessModalOpen(false);
+                      onNavigateToConsole();
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 px-3.5 py-2 font-semibold text-amber-300 transition-colors cursor-pointer"
+                  >
+                    <UserCheck className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Staff Console (support@remotfix.in)</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSuccessModalOpen(false);
+                    onTicketCreated(createdTicket.id);
+                  }}
+                  className="flex items-center gap-2 rounded-lg bg-cyan-400 hover:bg-cyan-300 px-5 py-2 font-bold text-black uppercase tracking-wider transition-colors cursor-pointer shadow-lg shadow-cyan-400/20"
+                >
+                  <span>Enter Live Session Room (Ticket #{createdTicket.id})</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
