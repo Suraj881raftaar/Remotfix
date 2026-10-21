@@ -75,6 +75,53 @@ export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onCl
           </button>
         </div>
 
+        {/* 403 Forbidden Error Alert & Instant Fix Guide */}
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-200 font-display">
+                How to Clear "Blocked due to access forbidden (403)"
+              </h4>
+              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                Google Search Console reported <code className="text-amber-300 font-mono">Page fetch: Failed (403)</code>. Your <code className="text-emerald-400 font-mono">robots.txt</code> allows crawling (<span className="text-emerald-400 font-semibold">Crawl allowed: Yes</span>), which means the block is happening at the Cloudflare or DNS firewall level.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+              <span className="font-semibold text-cyan-300">1. Check Inspected Domain URL</span>
+              <p className="text-slate-400 leading-snug">
+                Make sure you entered <code className="text-white font-mono">https://remotfix.in/</code> and NOT the staging <code className="text-slate-500 font-mono">*.run.app</code> preview URL (staging URLs block public crawlers by default).
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+              <span className="font-semibold text-cyan-300">2. Cloudflare Bot Fight Mode</span>
+              <p className="text-slate-400 leading-snug">
+                Go to <span className="text-white font-medium">Cloudflare &gt; Security &gt; Bots</span>. Turn OFF <span className="text-amber-200">"Bot Fight Mode"</span> or allow verified search engine bots.
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+              <span className="font-semibold text-cyan-300">3. Cloudflare WAF Allow Rule</span>
+              <p className="text-slate-400 leading-snug">
+                Under <span className="text-white font-medium">Security &gt; WAF &gt; Custom Rules</span>, add an Allow rule: <code className="text-cyan-300 font-mono">cf.client.bot eq true</code> &rarr; Action: <strong>Skip all WAF rules</strong>.
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+              <span className="font-semibold text-cyan-300">4. Browser Integrity Check</span>
+              <p className="text-slate-400 leading-snug">
+                Under <span className="text-white font-medium">Security &gt; Settings</span>, disable <span className="text-amber-200">"Browser Integrity Check"</span> and ensure Security Level is set to <span className="text-emerald-300">Medium</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Indexing Readiness Checklist */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">

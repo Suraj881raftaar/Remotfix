@@ -113,22 +113,22 @@ export default function App() {
       {/* Floating Glass Header */}
       <header className="sticky top-4 z-40 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
         <nav className="glass-panel rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-xl shadow-black/40 border border-slate-700/60 transition-all">
-          {/* Logo Brand */}
+          {/* Logo Brand with Official Logo Image */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px] shadow-lg shadow-cyan-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-                <span className="font-display font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 text-base">
-                  RF
-                </span>
-              </div>
+            <div className="h-10 px-2.5 py-1 rounded-xl bg-white/95 border border-white/30 shadow-lg shadow-cyan-500/10 flex items-center justify-center shrink-0">
+              <img 
+                src="/assets/aistudio/1791411926566_992a226a.png" 
+                alt="Remotfix Logo" 
+                className="h-7 w-auto object-contain"
+              />
             </div>
             <div>
               <div className="font-display font-bold text-lg tracking-tight text-white flex items-center gap-2">
                 REMOTFIX<span className="text-cyan-400">.IN</span>
               </div>
-              <div className="text-[10px] text-slate-400 font-mono tracking-wide uppercase flex items-center gap-1.5">
+              <div className="text-[10px] text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-1.5 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Next-Gen IT AMC & Remote Fix
+                Remote IT Solutions & Support
               </div>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function App() {
               <button
                 onClick={handleCopyEmail}
                 title="Copy email to clipboard"
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1"
+                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
               >
                 {copiedEmail ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
               </button>
@@ -169,7 +169,7 @@ export default function App() {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20 space-y-24">
         
         {/* HERO SECTION */}
-        <section className="text-center space-y-8 max-w-4xl mx-auto pt-6">
+        <section className="text-center space-y-8 max-w-4xl mx-auto pt-4">
           
           {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/80 text-xs text-slate-300 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)]">
@@ -177,6 +177,34 @@ export default function App() {
             <span className="font-mono text-cyan-300 font-medium">SYSTEM DEPLOYMENT IN PROGRESS</span>
             <span className="text-slate-500">·</span>
             <span>COMING SOON</span>
+          </div>
+
+          {/* Official Company Brand Card & Quote Spotlight */}
+          <div className="pt-1">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-3 sm:p-4 pr-6 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-2xl backdrop-blur-xl max-w-2xl mx-auto">
+              {/* Logo Presentation in crisp white frosted container */}
+              <div className="bg-white/95 rounded-xl px-4 py-2.5 shadow-inner border border-white/50 flex items-center justify-center shrink-0">
+                <img 
+                  src="/assets/aistudio/1791411926566_992a226a.png" 
+                  alt="Remotfix - Remote IT Solutions & Support" 
+                  className="h-12 sm:h-14 w-auto object-contain"
+                />
+              </div>
+
+              {/* Company Quote / Tagline Focus */}
+              <div className="text-center sm:text-left space-y-1">
+                <div className="text-[11px] font-mono uppercase tracking-widest text-cyan-400 flex items-center justify-center sm:justify-start gap-1.5 font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Company Quote &amp; Mission</span>
+                </div>
+                <div className="text-base sm:text-lg font-extrabold text-white font-display tracking-tight">
+                  &ldquo;REMOTE IT SOLUTIONS &amp; SUPPORT&rdquo;
+                </div>
+                <div className="text-xs text-slate-400">
+                  Comprehensive IT AMC for Workstations, Network Racks &amp; Dedicated Servers
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Main Headline */}
@@ -188,7 +216,7 @@ export default function App() {
               </span>
             </h1>
             <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-              Remotfix is launching an enterprise platform for seamless on-demand remote troubleshooting and comprehensive Annual Maintenance Contracts (AMC) covering workstations, network racks, and bare-metal server infrastructure.
+              Guided by our mission <strong className="text-white font-semibold">&ldquo;Remote IT Solutions &amp; Support&rdquo;</strong>, Remotfix is launching an enterprise platform for seamless on-demand remote troubleshooting and comprehensive Annual Maintenance Contracts (AMC) covering workstations, network racks, and bare-metal server infrastructure.
             </p>
           </div>
 
@@ -630,9 +658,21 @@ export default function App() {
       <footer className="border-t border-slate-800/80 bg-slate-950/80 py-8 relative z-10 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="font-display font-bold text-slate-300">REMOTFIX.IN</span>
-            <span>·</span>
-            <span>© {new Date().getFullYear()} Remotfix Technologies. All rights reserved.</span>
+            <div className="h-8 px-2 py-0.5 rounded-lg bg-white/95 border border-white/30 flex items-center justify-center shrink-0 shadow-sm">
+              <img 
+                src="/assets/aistudio/1791411926566_992a226a.png" 
+                alt="Remotfix Logo" 
+                className="h-5 w-auto object-contain"
+              />
+            </div>
+            <div>
+              <div className="font-display font-bold text-slate-200">REMOTFIX.IN</div>
+              <div className="text-[10px] text-cyan-400 font-mono tracking-wider uppercase font-semibold">
+                Remote IT Solutions &amp; Support
+              </div>
+            </div>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">© {new Date().getFullYear()} Remotfix Technologies.</span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">

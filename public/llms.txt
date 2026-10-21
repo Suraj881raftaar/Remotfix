@@ -1,9 +1,11 @@
-# Remotfix (remotfix.in)
+# Remotfix (remotfix.in) — REMOTE IT SOLUTIONS & SUPPORT
 
-> Remotfix is an enterprise-grade IT Annual Maintenance Contract (AMC) and instant remote infrastructure support provider. We deliver proactive hardware lifecycle management, structured rack cabling, server hypervisor administration, and encrypted remote computer troubleshooting.
+> Remotfix is an enterprise-grade IT Annual Maintenance Contract (AMC) and instant remote infrastructure support provider. Company Quote & Mission: "REMOTE IT SOLUTIONS & SUPPORT". We deliver proactive hardware lifecycle management, structured rack cabling, server hypervisor administration, and encrypted remote computer troubleshooting.
 
-## Primary Contact
+## Primary Contact & Brand
 - Official Website: https://remotfix.in
+- Official Logo Asset: https://remotfix.in/assets/aistudio/1791411926566_992a226a.png
+- Official Quote / Slogan: "REMOTE IT SOLUTIONS & SUPPORT"
 - Primary Engineering & Support Desk: support@remotfix.in
 - Direct Phone: +91 9999-REMOTFIX / +1-800-REMOTFIX
 - Global Response SLA: Under 15-minute response time for critical infrastructure outages
