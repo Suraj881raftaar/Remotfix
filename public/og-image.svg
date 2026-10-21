@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="bgGlow" cx="20%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="60%" stop-color="#090a0f"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </radialGradient>
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0.06)"/>
+      <stop offset="100%" stop-color="rgba(56,189,248,0.2)"/>
+    </linearGradient>
+    <filter id="blurFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+  </defs>
+
+  <!-- Deep Background -->
+  <rect width="1200" height="630" fill="url(#bgGlow)"/>
+
+  <!-- Subtle Ambient Glow Orbs -->
+  <circle cx="200" cy="180" r="180" fill="#0284c7" opacity="0.15" filter="url(#blurFilter)"/>
+  <circle cx="1000" cy="450" r="220" fill="#4f46e5" opacity="0.12" filter="url(#blurFilter)"/>
+
+  <!-- Subtle Tech Grid -->
+  <g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+    <line x1="100" y1="0" x2="100" y2="630"/>
+    <line x1="250" y1="0" x2="250" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="550" y1="0" x2="550" y2="630"/>
+    <line x1="700" y1="0" x2="700" y2="630"/>
+    <line x1="850" y1="0" x2="850" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="240" x2="1200" y2="240"/>
+    <line x1="0" y1="360" x2="1200" y2="360"/>
+    <line x1="0" y1="480" x2="1200" y2="480"/>
+  </g>
+
+  <!-- Main Glassmorphism Frame -->
+  <rect x="70" y="60" width="1060" height="510" rx="24" fill="rgba(15, 23, 42, 0.65)" stroke="url(#borderGrad)" stroke-width="1.5"/>
+
+  <!-- Top Badge -->
+  <rect x="110" y="95" width="230" height="36" rx="18" fill="rgba(56, 189, 248, 0.1)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1"/>
+  <circle cx="128" cy="113" r="4" fill="#38bdf8"/>
+  <text x="142" y="118" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" letter-spacing="1.5">COMING SOON • 2026</text>
+
+  <!-- Main Brand Title -->
+  <text x="110" y="195" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="800" letter-spacing="-1">
+    REMOTFIX<tspan fill="#38bdf8">.IN</tspan>
+  </text>
+  <text x="110" y="240" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="400">
+    Enterprise IT Annual Maintenance Contracts &amp; Remote Diagnostic Infrastructure
+  </text>
+
+  <!-- 3 Service Highlights Cards (Glass Tiles) -->
+  <!-- Card 1 -->
+  <rect x="110" y="280" width="300" height="150" rx="16" fill="rgba(30, 41, 59, 0.5)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1"/>
+  <text x="135" y="325" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">01. Workstations AMC</text>
+  <text x="135" y="355" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="400">Fleet maintenance for Mac &amp; PC</text>
+  <text x="135" y="380" fill="#64748b" font-family="system-ui, -apple-system, sans-serif" font-size="13">Thermal cleaning &amp; EDR security</text>
+  <text x="135" y="405" fill="#38bdf8" font-family="monospace" font-size="12">SLA: 4 Hours Max</text>
+
+  <!-- Card 2 -->
+  <rect x="445" y="280" width="310" height="150" rx="16" fill="rgba(30, 41, 59, 0.5)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1"/>
+  <text x="470" y="325" fill="#60a5fa" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">02. Network Racks AMC</text>
+  <text x="470" y="355" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="400">Structured patch cabling &amp; VLANs</text>
+  <text x="470" y="380" fill="#64748b" font-family="system-ui, -apple-system, sans-serif" font-size="13">Firewall audits &amp; 24/7 SNMP NOC</text>
+  <text x="470" y="405" fill="#60a5fa" font-family="monospace" font-size="12">SLA: 2 Hours Urgent</text>
+
+  <!-- Card 3 -->
+  <rect x="790" y="280" width="300" height="150" rx="16" fill="rgba(30, 41, 59, 0.5)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1"/>
+  <text x="815" y="325" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">03. Dedicated Servers</text>
+  <text x="815" y="355" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="400">Bare-metal &amp; Hypervisor SLA</text>
+  <text x="815" y="380" fill="#64748b" font-family="system-ui, -apple-system, sans-serif" font-size="13">Immutable backups &amp; failovers</text>
+  <text x="815" y="405" fill="#818cf8" font-family="monospace" font-size="12">99.99% Guaranteed</text>
+
+  <!-- Bottom Details Bar -->
+  <line x1="110" y1="475" x2="1090" y2="475" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
+  
+  <text x="110" y="520" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="15">
+    Primary Contact: <tspan fill="#38bdf8" font-weight="600">support@remotfix.in</tspan>
+  </text>
+  
+  <text x="1090" y="520" text-anchor="end" fill="#64748b" font-family="monospace" font-size="14">
+    https://remotfix.in
+  </text>
+</svg>

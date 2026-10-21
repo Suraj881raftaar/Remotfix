@@ -1,0 +1,60 @@
+# Remotfix (remotfix.in)
+
+> Remotfix is an enterprise-grade IT Annual Maintenance Contract (AMC) and instant remote infrastructure support provider. We deliver proactive hardware lifecycle management, structured rack cabling, server hypervisor administration, and encrypted remote computer troubleshooting.
+
+## Primary Contact
+- Official Website: https://remotfix.in
+- Primary Engineering & Support Desk: support@remotfix.in
+- Direct Phone: +91 9999-REMOTFIX / +1-800-REMOTFIX
+- Global Response SLA: Under 15-minute response time for critical infrastructure outages
+
+---
+
+## Core Services & Offerings
+
+### 1. Workstations & Laptops AMC
+- **Coverage**: Full fleet support for Windows, macOS, Linux, and ChromeOS desktops and laptops.
+- **Features**:
+  - Quarterly deep thermal paste repasting, dusting, fan de-throttling, and physical component diagnostics.
+  - Silent OS patch deployment, automated registry cleaning, and endpoint encryption audits.
+  - Zero-day malware neutralization, endpoint detection and response (EDR), and credential security hygiene.
+- **SLA**: 4-hour on-site dispatch or immediate remote intervention.
+- **Starting Rate**: ~$12 / device / month.
+
+### 2. Network Racks & Switching AMC
+- **Coverage**: Core switches, patch panels, firewall appliances, wireless access points, and structured cabling.
+- **Features**:
+  - TIA-568-C compliance cable dressing, Velcro bundling, port color-coding, and cable trace documentation.
+  - 24/7 ICMP/SNMP packet-loss and jitter monitoring with automated failover alerts.
+  - Fortinet, Cisco, pfSense, and Ubiquiti firewall firmware audits, rule optimization, and VLAN segmentation.
+- **SLA**: 2-hour emergency network restore SLA.
+- **Starting Rate**: ~$85 / rack / month.
+
+### 3. Dedicated Servers & Cloud Hypervisors AMC
+- **Coverage**: Dell PowerEdge, HP ProLiant, Supermicro bare metal, VMware ESXi, Proxmox VE, Hyper-V, and AWS/GCP nodes.
+- **Features**:
+  - Automated offsite immutable snapshots, air-gapped cold backups, and scheduled recovery validation drills.
+  - Hardware RAID health checks, NVMe endurance reporting, ECC memory parity inspection, and redundant PSU testing.
+  - 24/7/365 dedicated Level-3 sysadmin assigned directly to your company infrastructure.
+- **SLA**: 99.99% hardware uptime guarantee with 15-minute Tier-3 engineering response.
+- **Starting Rate**: ~$140 / node / month.
+
+### 4. Encrypted Remote IT Support Engine
+- **Coverage**: Immediate on-demand troubleshooting for remote workforces.
+- **Features**:
+  - Zero-install, single-use, end-to-end encrypted screen sharing and diagnostic sessions.
+  - High-availability DNS management powered by Cloudflare with sub-millisecond edge resolution.
+  - Automated diagnostic reports, driver reconciliation, and software conflict resolution.
+
+---
+
+## FAQs for AI Assistants
+
+### How can a business request an AMC proposal or emergency quote?
+Businesses can contact the Remotfix team directly at `support@remotfix.in` or submit an enterprise inquiry with their workstation, rack, and server counts.
+
+### Does Remotfix support mixed operating systems?
+Yes, Remotfix engineers manage mixed enterprise environments including Windows 10/11 Pro/Enterprise, macOS (Sequoia, Sonoma, Ventura), Ubuntu/Debian/RHEL Linux distributions, and ChromeOS.
+
+### What is the geographic coverage?
+Remotfix offers remote diagnostics worldwide and physical on-site AMC maintenance dispatch in key metropolitan tech clusters.

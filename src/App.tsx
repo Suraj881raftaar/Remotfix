@@ -17,16 +17,19 @@ import {
   PhoneCall, 
   FileText, 
   Globe, 
-  AlertCircle
+  AlertCircle,
+  Search
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { AmcInquiryModal } from './components/AmcInquiryModal';
+import { SearchIndexModal } from './components/SearchIndexModal';
 
 export default function App() {
   const [emailInput, setEmailInput] = useState('');
   const [isEmailSubmitted, setIsEmailSubmitted] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [isAmcModalOpen, setIsAmcModalOpen] = useState(false);
+  const [isSearchIndexModalOpen, setIsSearchIndexModalOpen] = useState(false);
   
   // Launch Target: 24 days from now (set constant target)
   const [timeLeft, setTimeLeft] = useState({
@@ -647,6 +650,16 @@ export default function App() {
               AMC Quotation
             </button>
             <span>·</span>
+            <button 
+              onClick={() => setIsSearchIndexModalOpen(true)}
+              className="hover:text-cyan-400 transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Search Engine Indexing & Protocol Status"
+            >
+              <Search className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Indexing Status</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            </button>
+            <span>·</span>
             <span className="text-slate-600">Cloudflare DNS Protected</span>
           </div>
         </div>
@@ -656,6 +669,12 @@ export default function App() {
       <AmcInquiryModal
         isOpen={isAmcModalOpen}
         onClose={() => setIsAmcModalOpen(false)}
+      />
+
+      {/* SEARCH ENGINE INDEXING HUB MODAL */}
+      <SearchIndexModal
+        isOpen={isSearchIndexModalOpen}
+        onClose={() => setIsSearchIndexModalOpen(false)}
       />
     </div>
   );
