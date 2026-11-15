@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Search, 
   ExternalLink, 
   Check, 
   Copy, 
-  FileCode, 
-  Bot, 
   Zap, 
-  ShieldCheck, 
   CheckCircle2,
-  Globe2
+  Globe2,
+  ShieldAlert,
+  RotateCcw,
+  Gauge
 } from 'lucide-react';
 
 interface SearchIndexModalProps {
@@ -18,258 +18,353 @@ interface SearchIndexModalProps {
   onClose: () => void;
 }
 
+interface CfChecklistState {
+  domainUrl: boolean;
+  botFightOff: boolean;
+  wafSkipRule: boolean;
+  browserIntegrityOff: boolean;
+}
+
+const DEFAULT_CHECKLIST: CfChecklistState = {
+  domainUrl: false,
+  botFightOff: false,
+  wafSkipRule: false,
+  browserIntegrityOff: false
+};
+
 export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onClose }) => {
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [copiedPing, setCopiedPing] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [checklist, setChecklist] = useState<CfChecklistState>(DEFAULT_CHECKLIST);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('remotfix_cf_checklist');
+      if (saved) {
+        setChecklist({ ...DEFAULT_CHECKLIST, ...JSON.parse(saved) });
+      }
+    } catch {
+      // ignore storage read error
+    }
+  }, []);
 
   if (!isOpen) return null;
 
   const indexNowKey = 'e837f828a35e43cafb0124814485963a';
   const pingUrl = `https://www.bing.com/indexnow?url=https://remotfix.in/&key=${indexNowKey}`;
+  const wafRuleExpression = `(cf.client.bot) or (http.user_agent contains "Chrome-Lighthouse") or (http.user_agent contains "Google-InspectionTool") or (http.user_agent contains "PTST")`;
+  const pageSpeedUrl = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent('https://remotfix.in/')}`;
 
-  const handleCopy = (text: string, type: 'key' | 'ping') => {
-    navigator.clipboard.writeText(text);
-    if (type === 'key') {
-      setCopiedKey(true);
-      setTimeout(() => setCopiedKey(false), 2000);
-    } else {
-      setCopiedPing(true);
-      setTimeout(() => setCopiedPing(false), 2000);
+  const completedCount = Object.values(checklist).filter(Boolean).length;
+
+  const toggleChecklistItem = (key: keyof CfChecklistState) => {
+    const updated = { ...checklist, [key]: !checklist[key] };
+    setChecklist(updated);
+    try {
+      localStorage.setItem('remotfix_cf_checklist', JSON.stringify(updated));
+    } catch {
+      // ignore storage write error
     }
   };
 
+  const resetChecklist = () => {
+    setChecklist(DEFAULT_CHECKLIST);
+    try {
+      localStorage.removeItem('remotfix_cf_checklist');
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="indexing-modal-title"
+    >
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl bg-slate-900/90 border border-slate-700/70 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl z-10 space-y-6">
+      <div className="relative w-full max-w-2xl bg-slate-900/95 border border-slate-700/70 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl z-10 space-y-6 my-8">
         
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-              <Search className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+              <Search className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white font-display flex items-center gap-2">
-                Search Engine & Indexing Hub
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
-                  READY
-                </span>
+              <h2 id="indexing-modal-title" className="text-xl font-bold text-white font-display">
+                Search Engine &amp; PageSpeed Indexing Hub
               </h2>
-              <p className="text-xs text-slate-400">
-                Configurations and instant submission protocols for remotfix.in
+              <p className="text-xs text-slate-300 mt-0.5">
+                SEO diagnostics, Cloudflare 403 remediation, and crawler verification for remotfix.in
               </p>
             </div>
           </div>
           <button 
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Close Search Engine Indexing Hub"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        {/* 403 Forbidden Error Alert & Instant Fix Guide */}
+        {/* PageSpeed Insights & 403 Root Cause Diagnosis */}
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
-              <Zap className="w-4 h-4" />
+              <ShieldAlert className="w-4 h-4" aria-hidden="true" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-amber-200 font-display">
-                How to Clear "Blocked due to access forbidden (403)"
-              </h4>
-              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
-                Google Search Console reported <code className="text-amber-300 font-mono">Page fetch: Failed (403)</code>. Your <code className="text-emerald-400 font-mono">robots.txt</code> allows crawling (<span className="text-emerald-400 font-semibold">Crawl allowed: Yes</span>), which means the block is happening at the Cloudflare or DNS firewall level.
+              <h3 className="text-sm font-bold text-amber-200 font-display">
+                Why PageSpeed &amp; Search Console Showed HTTP 403 &amp; SEO 40
+              </h3>
+              <p className="text-xs text-slate-200 mt-1 leading-relaxed">
+                Cloudflare&apos;s <strong className="text-white">&ldquo;Performing security verification&rdquo;</strong> challenge page intercepted Lighthouse and Googlebot with HTTP <code className="text-amber-300 font-mono">403</code>. That Cloudflare interstitial injects <code className="text-amber-300 font-mono">noindex</code>, omits your meta description, and runs challenge scripts that add ~460 ms blocking time.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-              <span className="font-semibold text-cyan-300">1. Check Inspected Domain URL</span>
-              <p className="text-slate-400 leading-snug">
-                Make sure you entered <code className="text-white font-mono">https://remotfix.in/</code> and NOT the staging <code className="text-slate-500 font-mono">*.run.app</code> preview URL (staging URLs block public crawlers by default).
-              </p>
+          {/* Copyable Cloudflare WAF Custom Rule Expression */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-cyan-300">
+                Cloudflare WAF Custom Rule Expression (Allow Search &amp; PageSpeed Bots)
+              </span>
+              <button
+                type="button"
+                onClick={() => handleCopy(wafRuleExpression, 'waf')}
+                className="text-xs text-cyan-300 hover:text-white flex items-center gap-1 font-mono transition-colors px-2 py-1 rounded bg-slate-900 border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
+              >
+                {copiedId === 'waf' ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                <span>{copiedId === 'waf' ? 'Copied' : 'Copy Rule'}</span>
+              </button>
+            </div>
+            <pre className="text-[11px] font-mono text-slate-200 overflow-x-auto p-2 rounded bg-slate-900/90 border border-slate-800">
+              {wafRuleExpression}
+            </pre>
+            <p className="text-[11px] text-slate-300">
+              In Cloudflare: <span className="text-white font-medium">Security &gt; WAF &gt; Custom rules &gt; Edit expression</span> &rarr; Action: <span className="text-emerald-300 font-semibold">Skip all remaining rules, Security Level &amp; Rate Limiting</span>.
+            </p>
+          </div>
+
+          {/* Interactive 4-Step Cloudflare Verification Checklist */}
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-200 font-mono tabular-nums">
+                Cloudflare Unblock Checklist ({completedCount}/4 Completed)
+              </span>
+              {completedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={resetChecklist}
+                  className="text-xs text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset
+                </button>
+              )}
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-              <span className="font-semibold text-cyan-300">2. Cloudflare Bot Fight Mode</span>
-              <p className="text-slate-400 leading-snug">
-                Go to <span className="text-white font-medium">Cloudflare &gt; Security &gt; Bots</span>. Turn OFF <span className="text-amber-200">"Bot Fight Mode"</span> or allow verified search engine bots.
-              </p>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => toggleChecklistItem('domainUrl')}
+                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                  checklist.domainUrl ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.domainUrl ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                  <div>
+                    <div className="font-semibold text-slate-100">1. Inspect Production URL</div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      Test <code className="text-cyan-300 font-mono">https://remotfix.in/</code> directly, not staging <code className="text-slate-300 font-mono">*.run.app</code> URLs.
+                    </p>
+                  </div>
+                </div>
+              </button>
 
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-              <span className="font-semibold text-cyan-300">3. Cloudflare WAF Allow Rule</span>
-              <p className="text-slate-400 leading-snug">
-                Under <span className="text-white font-medium">Security &gt; WAF &gt; Custom Rules</span>, add an Allow rule: <code className="text-cyan-300 font-mono">cf.client.bot eq true</code> &rarr; Action: <strong>Skip all WAF rules</strong>.
-              </p>
-            </div>
+              <button
+                type="button"
+                onClick={() => toggleChecklistItem('botFightOff')}
+                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                  checklist.botFightOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.botFightOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                  <div>
+                    <div className="font-semibold text-slate-100">2. Disable Bot Fight Mode</div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      In <span className="text-white">Security &gt; Bots</span>, turn OFF Bot Fight Mode so Lighthouse &amp; Googlebot aren&apos;t challenged.
+                    </p>
+                  </div>
+                </div>
+              </button>
 
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-              <span className="font-semibold text-cyan-300">4. Browser Integrity Check</span>
-              <p className="text-slate-400 leading-snug">
-                Under <span className="text-white font-medium">Security &gt; Settings</span>, disable <span className="text-amber-200">"Browser Integrity Check"</span> and ensure Security Level is set to <span className="text-emerald-300">Medium</span>.
-              </p>
+              <button
+                type="button"
+                onClick={() => toggleChecklistItem('wafSkipRule')}
+                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                  checklist.wafSkipRule ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.wafSkipRule ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                  <div>
+                    <div className="font-semibold text-slate-100">3. Deploy WAF Skip Rule</div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      Paste the rule above under <span className="text-white">Security &gt; WAF &gt; Custom rules</span> and place it #1.
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleChecklistItem('browserIntegrityOff')}
+                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                  checklist.browserIntegrityOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.browserIntegrityOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                  <div>
+                    <div className="font-semibold text-slate-100">4. Browser Integrity &amp; Geo</div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      Under <span className="text-white">Security &gt; Settings</span>, disable Browser Integrity Check and allow US/EU Google probes.
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Indexing Readiness Checklist */}
+        {/* Code-Side Readiness Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
-              <div className="font-semibold text-slate-200">XML Sitemap Configured</div>
-              <div className="text-slate-400 text-[11px]">Indexed at <code className="text-cyan-300">/sitemap.xml</code> with image metadata</div>
+              <div className="font-semibold text-slate-100">SEO Title &amp; Meta Description</div>
+              <div className="text-slate-300 text-[11px]">Optimized length (51-char title, 142-char description)</div>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
-              <div className="font-semibold text-slate-200">Universal robots.txt</div>
-              <div className="text-slate-400 text-[11px]">Explicit allow for Google, Bing, Yahoo, Yandex & AI bots</div>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold text-slate-200">Schema.org JSON-LD</div>
-              <div className="text-slate-400 text-[11px]">ProfessionalService, AMC Offers, Breadcrumbs</div>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold text-slate-200">Instant IndexNow Protocol</div>
-              <div className="text-slate-400 text-[11px]">1-second push notification to Bing, Yandex, Naver</div>
+              <div className="font-semibold text-slate-100">Universal robots.txt &amp; Sitemap</div>
+              <div className="text-slate-300 text-[11px]">Explicit allow for Google, Bing, AI bots &amp; XML sitemap</div>
             </div>
           </div>
         </div>
 
-        {/* Instant Search Engine Actions */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
-            Direct Search Engine Submissions
+        {/* Verification & Submission Tools */}
+        <div className="space-y-2.5">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 font-mono">
+            Retest &amp; Search Submissions
           </h3>
 
-          <div className="space-y-2">
-            {/* Google Search Console */}
-            <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Globe2 className="w-5 h-5 text-blue-400 shrink-0" />
-                <div>
-                  <div className="text-sm font-semibold text-slate-200">Google Search Console</div>
-                  <div className="text-xs text-slate-400">Submit sitemap <code className="text-cyan-300">https://remotfix.in/sitemap.xml</code> for crawl</div>
-                </div>
-              </div>
-              <a 
-                href="https://search.google.com/search-console" 
-                target="_blank" 
-                rel="noreferrer"
-                className="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-medium flex items-center gap-1.5 transition-colors"
-              >
-                <span>Console</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <a 
+              href={pageSpeedUrl}
+              target="_blank" 
+              rel="noreferrer"
+              className="p-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-200 text-xs font-semibold flex items-center justify-between transition-colors"
+            >
+              <span className="flex items-center gap-2"><Gauge className="w-4 h-4 text-cyan-300" aria-hidden="true" /> PageSpeed Retest</span>
+              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+            </a>
 
-            {/* Microsoft Bing Webmaster Tools */}
-            <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Zap className="w-5 h-5 text-amber-400 shrink-0" />
-                <div>
-                  <div className="text-sm font-semibold text-slate-200">Microsoft Bing & Copilot Webmaster</div>
-                  <div className="text-xs text-slate-400">Powering Bing, Yahoo, DuckDuckGo, and Copilot AI answers</div>
-                </div>
-              </div>
-              <a 
-                href="https://www.bing.com/webmasters" 
-                target="_blank" 
-                rel="noreferrer"
-                className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-medium flex items-center gap-1.5 transition-colors"
-              >
-                <span>Webmaster</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
+            <a 
+              href="https://search.google.com/search-console" 
+              target="_blank" 
+              rel="noreferrer"
+              className="p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-semibold flex items-center justify-between transition-colors"
+            >
+              <span className="flex items-center gap-2"><Globe2 className="w-4 h-4 text-blue-400" aria-hidden="true" /> Search Console</span>
+              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+            </a>
 
-            {/* IndexNow 1-Click Ping */}
-            <div className="p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-800/40 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold">
-                  <Zap className="w-4 h-4" />
-                  <span>IndexNow Instant Ping (Bing & Yandex)</span>
-                </div>
-                <button
-                  onClick={() => handleCopy(pingUrl, 'ping')}
-                  className="text-xs text-cyan-300 hover:text-white flex items-center gap-1 font-mono transition-colors"
-                >
-                  {copiedPing ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedPing ? 'Copied' : 'Copy Ping URL'}</span>
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                You can ping Bing's IndexNow endpoint directly to request an instant crawl without waiting days:
-              </p>
-              <div className="p-2 rounded-lg bg-slate-950 text-[11px] font-mono text-slate-300 truncate border border-slate-800">
-                {pingUrl}
-              </div>
+            <a 
+              href="https://www.bing.com/webmasters" 
+              target="_blank" 
+              rel="noreferrer"
+              className="p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-semibold flex items-center justify-between transition-colors"
+            >
+              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-amber-400" aria-hidden="true" /> Bing Webmaster</span>
+              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+            </a>
+          </div>
+
+          {/* IndexNow Ping */}
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-cyan-300">IndexNow Instant Ping URL (Bing &amp; Yandex)</span>
+              <button
+                type="button"
+                onClick={() => handleCopy(pingUrl, 'ping')}
+                className="text-xs text-cyan-300 hover:text-white flex items-center gap-1 font-mono transition-colors cursor-pointer"
+              >
+                {copiedId === 'ping' ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                <span>{copiedId === 'ping' ? 'Copied' : 'Copy URL'}</span>
+              </button>
+            </div>
+            <div className="text-[11px] font-mono text-slate-300 truncate">
+              {pingUrl}
             </div>
           </div>
         </div>
 
         {/* Public Machine-Readable Files */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
-            Public Crawl Endpoints
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-            <a 
-              href="/sitemap.xml" 
-              target="_blank" 
-              rel="noreferrer"
-              className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-300 flex items-center justify-between transition-colors"
-            >
-              <span className="font-mono text-cyan-400">/sitemap.xml</span>
-              <ExternalLink className="w-3 h-3 text-slate-500" />
-            </a>
-            <a 
-              href="/robots.txt" 
-              target="_blank" 
-              rel="noreferrer"
-              className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-300 flex items-center justify-between transition-colors"
-            >
-              <span className="font-mono text-cyan-400">/robots.txt</span>
-              <ExternalLink className="w-3 h-3 text-slate-500" />
-            </a>
-            <a 
-              href="/llms.txt" 
-              target="_blank" 
-              rel="noreferrer"
-              className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-300 flex items-center justify-between transition-colors"
-            >
-              <span className="font-mono text-cyan-400">/llms.txt</span>
-              <ExternalLink className="w-3 h-3 text-slate-500" />
-            </a>
-          </div>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <a 
+            href="/sitemap.xml" 
+            target="_blank" 
+            rel="noreferrer"
+            className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-200 flex items-center justify-between transition-colors"
+          >
+            <span className="font-mono text-cyan-300">/sitemap.xml</span>
+            <ExternalLink className="w-3 h-3 text-slate-400" aria-hidden="true" />
+          </a>
+          <a 
+            href="/robots.txt" 
+            target="_blank" 
+            rel="noreferrer"
+            className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-200 flex items-center justify-between transition-colors"
+          >
+            <span className="font-mono text-cyan-300">/robots.txt</span>
+            <ExternalLink className="w-3 h-3 text-slate-400" aria-hidden="true" />
+          </a>
+          <a 
+            href="/llms.txt" 
+            target="_blank" 
+            rel="noreferrer"
+            className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-200 flex items-center justify-between transition-colors"
+          >
+            <span className="font-mono text-cyan-300">/llms.txt</span>
+            <ExternalLink className="w-3 h-3 text-slate-400" aria-hidden="true" />
+          </a>
         </div>
 
-        {/* Footer Note */}
-        <div className="pt-2 border-t border-slate-800 text-center text-xs text-slate-500">
-          Domain: <span className="text-slate-300 font-mono">remotfix.in</span> · Canonical: <span className="text-slate-300 font-mono">https://remotfix.in/</span> · Contact: <span className="text-cyan-400 font-mono">support@remotfix.in</span>
+        <div className="pt-2 border-t border-slate-800 text-center text-xs text-slate-300">
+          Domain: <span className="text-white font-mono">remotfix.in</span> · Contact: <span className="text-cyan-300 font-mono">support@remotfix.in</span>
         </div>
-
       </div>
     </div>
   );
