@@ -1,11 +1,26 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+function copyRootHeadersPlugin() {
+  return {
+    name: 'copy-root-headers',
+    closeBundle() {
+      const src = path.resolve(__dirname, '_headers');
+      const destDir = path.resolve(__dirname, 'dist');
+      const dest = path.resolve(destDir, '_headers');
+      if (fs.existsSync(src) && fs.existsSync(destDir)) {
+        fs.copyFileSync(src, dest);
+      }
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), copyRootHeadersPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

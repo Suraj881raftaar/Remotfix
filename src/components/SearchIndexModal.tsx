@@ -10,7 +10,8 @@ import {
   Globe2,
   ShieldAlert,
   RotateCcw,
-  Gauge
+  Gauge,
+  DatabaseZap
 } from 'lucide-react';
 
 interface SearchIndexModalProps {
@@ -25,6 +26,13 @@ interface CfChecklistState {
   browserIntegrityOff: boolean;
 }
 
+interface CacheChecklistState {
+  devModeOff: boolean;
+  respectHeaders: boolean;
+  cacheRuleAdded: boolean;
+  verifyHit: boolean;
+}
+
 const DEFAULT_CHECKLIST: CfChecklistState = {
   domainUrl: false,
   botFightOff: false,
@@ -32,15 +40,28 @@ const DEFAULT_CHECKLIST: CfChecklistState = {
   browserIntegrityOff: false
 };
 
+const DEFAULT_CACHE_CHECKLIST: CacheChecklistState = {
+  devModeOff: false,
+  respectHeaders: false,
+  cacheRuleAdded: false,
+  verifyHit: false
+};
+
 export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onClose }) => {
+  const [activeTab, setActiveTab] = useState<'cache' | 'security'>('cache');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [checklist, setChecklist] = useState<CfChecklistState>(DEFAULT_CHECKLIST);
+  const [cacheChecklist, setCacheChecklist] = useState<CacheChecklistState>(DEFAULT_CACHE_CHECKLIST);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('remotfix_cf_checklist');
       if (saved) {
         setChecklist({ ...DEFAULT_CHECKLIST, ...JSON.parse(saved) });
+      }
+      const savedCache = localStorage.getItem('remotfix_cf_cache_checklist');
+      if (savedCache) {
+        setCacheChecklist({ ...DEFAULT_CACHE_CHECKLIST, ...JSON.parse(savedCache) });
       }
     } catch {
       // ignore storage read error
@@ -52,9 +73,11 @@ export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onCl
   const indexNowKey = 'e837f828a35e43cafb0124814485963a';
   const pingUrl = `https://www.bing.com/indexnow?url=https://remotfix.in/&key=${indexNowKey}`;
   const wafRuleExpression = `(cf.client.bot) or (http.user_agent contains "Chrome-Lighthouse") or (http.user_agent contains "Google-InspectionTool") or (http.user_agent contains "PTST")`;
+  const cacheRuleExpression = `(http.host eq "remotfix.in") or (http.host eq "www.remotfix.in")`;
   const pageSpeedUrl = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent('https://remotfix.in/')}`;
 
   const completedCount = Object.values(checklist).filter(Boolean).length;
+  const completedCacheCount = Object.values(cacheChecklist).filter(Boolean).length;
 
   const toggleChecklistItem = (key: keyof CfChecklistState) => {
     const updated = { ...checklist, [key]: !checklist[key] };
@@ -66,12 +89,31 @@ export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onCl
     }
   };
 
-  const resetChecklist = () => {
-    setChecklist(DEFAULT_CHECKLIST);
+  const toggleCacheChecklistItem = (key: keyof CacheChecklistState) => {
+    const updated = { ...cacheChecklist, [key]: !cacheChecklist[key] };
+    setCacheChecklist(updated);
     try {
-      localStorage.removeItem('remotfix_cf_checklist');
+      localStorage.setItem('remotfix_cf_cache_checklist', JSON.stringify(updated));
     } catch {
-      // ignore
+      // ignore storage write error
+    }
+  };
+
+  const resetChecklist = () => {
+    if (activeTab === 'security') {
+      setChecklist(DEFAULT_CHECKLIST);
+      try {
+        localStorage.removeItem('remotfix_cf_checklist');
+      } catch {
+        // ignore
+      }
+    } else {
+      setCacheChecklist(DEFAULT_CACHE_CHECKLIST);
+      try {
+        localStorage.removeItem('remotfix_cf_cache_checklist');
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -96,7 +138,7 @@ export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onCl
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl bg-slate-900/95 border border-slate-700/70 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl z-10 space-y-6 my-8">
+      <div className="relative w-full max-w-2xl bg-slate-900/95 border border-slate-700/70 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl z-10 space-y-5 my-8">
         
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -106,10 +148,10 @@ export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onCl
             </div>
             <div>
               <h2 id="indexing-modal-title" className="text-xl font-bold text-white font-display">
-                Search Engine &amp; PageSpeed Indexing Hub
+                Search Engine, Cache &amp; PageSpeed Hub
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                SEO diagnostics, Cloudflare 403 remediation, and crawler verification for remotfix.in
+                Cloudflare edge caching, 403 remediation, and crawler verification for remotfix.in
               </p>
             </div>
           </div>
@@ -123,137 +165,299 @@ export const SearchIndexModal: React.FC<SearchIndexModalProps> = ({ isOpen, onCl
           </button>
         </div>
 
-        {/* PageSpeed Insights & 403 Root Cause Diagnosis */}
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
-              <ShieldAlert className="w-4 h-4" aria-hidden="true" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-amber-200 font-display">
-                Why PageSpeed &amp; Search Console Showed HTTP 403 &amp; SEO 40
-              </h3>
-              <p className="text-xs text-slate-200 mt-1 leading-relaxed">
-                Cloudflare&apos;s <strong className="text-white">&ldquo;Performing security verification&rdquo;</strong> challenge page intercepted Lighthouse and Googlebot with HTTP <code className="text-amber-300 font-mono">403</code>. That Cloudflare interstitial injects <code className="text-amber-300 font-mono">noindex</code>, omits your meta description, and runs challenge scripts that add ~460 ms blocking time.
-              </p>
-            </div>
-          </div>
+        {/* Segmented Tab Controls */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveTab('cache')}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'cache'
+                ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <DatabaseZap className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Zero Cache Hits Fix</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('security')}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'security'
+                ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>403 &amp; PageSpeed SEO Fix</span>
+          </button>
+        </div>
 
-          {/* Copyable Cloudflare WAF Custom Rule Expression */}
-          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-cyan-300">
-                Cloudflare WAF Custom Rule Expression (Allow Search &amp; PageSpeed Bots)
-              </span>
-              <button
-                type="button"
-                onClick={() => handleCopy(wafRuleExpression, 'waf')}
-                className="text-xs text-cyan-300 hover:text-white flex items-center gap-1 font-mono transition-colors px-2 py-1 rounded bg-slate-900 border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
-              >
-                {copiedId === 'waf' ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
-                <span>{copiedId === 'waf' ? 'Copied' : 'Copy Rule'}</span>
-              </button>
+        {activeTab === 'cache' ? (
+          /* ZERO CACHE HITS REMEDIATION */
+          <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center shrink-0">
+                <DatabaseZap className="w-4 h-4" aria-hidden="true" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-cyan-200 font-display">
+                  Fixing &ldquo;0 Cache Hits&rdquo; on remotfix.in (Cloudflare Pages)
+                </h3>
+                <p className="text-xs text-slate-200 mt-1 leading-relaxed">
+                  A <code className="text-cyan-300 font-mono">_headers</code> file is copied into <code className="text-cyan-300 font-mono">dist/</code> on build, caching <code className="text-cyan-300 font-mono">/assets/*</code> for 1 year (<code className="text-cyan-300 font-mono">immutable</code>) while always revalidating <code className="text-cyan-300 font-mono">/</code> and <code className="text-cyan-300 font-mono">/*.html</code>. Complete the Cloudflare steps below so edge PoPs serve <code className="text-emerald-300 font-mono">cf-cache-status: HIT</code>.
+                </p>
+              </div>
             </div>
-            <pre className="text-[11px] font-mono text-slate-200 overflow-x-auto p-2 rounded bg-slate-900/90 border border-slate-800">
-              {wafRuleExpression}
-            </pre>
-            <p className="text-[11px] text-slate-300">
-              In Cloudflare: <span className="text-white font-medium">Security &gt; WAF &gt; Custom rules &gt; Edit expression</span> &rarr; Action: <span className="text-emerald-300 font-semibold">Skip all remaining rules, Security Level &amp; Rate Limiting</span>.
-            </p>
-          </div>
 
-          {/* Interactive 4-Step Cloudflare Verification Checklist */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-200 font-mono tabular-nums">
-                Cloudflare Unblock Checklist ({completedCount}/4 Completed)
-              </span>
-              {completedCount > 0 && (
+            {/* Copyable Cloudflare Cache Rule Expression */}
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-cyan-300">
+                  Cloudflare Cache Rule Filter (Eligible for Cache)
+                </span>
                 <button
                   type="button"
-                  onClick={resetChecklist}
-                  className="text-xs text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  onClick={() => handleCopy(cacheRuleExpression, 'cacheRule')}
+                  className="text-xs text-cyan-300 hover:text-white flex items-center gap-1 font-mono transition-colors px-2 py-1 rounded bg-slate-900 border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
                 >
-                  <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset
+                  {copiedId === 'cacheRule' ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                  <span>{copiedId === 'cacheRule' ? 'Copied' : 'Copy Filter'}</span>
                 </button>
-              )}
+              </div>
+              <pre className="text-[11px] font-mono text-slate-200 overflow-x-auto p-2 rounded bg-slate-900/90 border border-slate-800">
+                {cacheRuleExpression}
+              </pre>
+              <p className="text-[11px] text-slate-300">
+                In Cloudflare: <span className="text-white font-medium">Caching &gt; Cache Rules &gt; Create rule</span> &rarr; Cache eligibility: <span className="text-emerald-300 font-semibold">Eligible for cache</span> &rarr; Edge TTL: <span className="text-white">Use cache-control header if present</span>.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => toggleChecklistItem('domainUrl')}
-                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
-                  checklist.domainUrl ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.domainUrl ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
-                  <div>
-                    <div className="font-semibold text-slate-100">1. Inspect Production URL</div>
-                    <p className="text-[11px] text-slate-300 mt-0.5">
-                      Test <code className="text-cyan-300 font-mono">https://remotfix.in/</code> directly, not staging <code className="text-slate-300 font-mono">*.run.app</code> URLs.
-                    </p>
-                  </div>
-                </div>
-              </button>
+            {/* 4-Step Cache Hit Checklist */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-200 font-mono tabular-nums">
+                  Edge Cache Verification ({completedCacheCount}/4 Completed)
+                </span>
+                {completedCacheCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetChecklist}
+                    className="text-xs text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset
+                  </button>
+                )}
+              </div>
 
-              <button
-                type="button"
-                onClick={() => toggleChecklistItem('botFightOff')}
-                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
-                  checklist.botFightOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.botFightOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
-                  <div>
-                    <div className="font-semibold text-slate-100">2. Disable Bot Fight Mode</div>
-                    <p className="text-[11px] text-slate-300 mt-0.5">
-                      In <span className="text-white">Security &gt; Bots</span>, turn OFF Bot Fight Mode so Lighthouse &amp; Googlebot aren&apos;t challenged.
-                    </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => toggleCacheChecklistItem('devModeOff')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    cacheChecklist.devModeOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cacheChecklist.devModeOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">1. Turn Off Development Mode</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        In <span className="text-white">Caching &gt; Configuration</span>, confirm Development Mode is OFF and Caching Level is <span className="text-cyan-300">Standard</span>.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => toggleChecklistItem('wafSkipRule')}
-                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
-                  checklist.wafSkipRule ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.wafSkipRule ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
-                  <div>
-                    <div className="font-semibold text-slate-100">3. Deploy WAF Skip Rule</div>
-                    <p className="text-[11px] text-slate-300 mt-0.5">
-                      Paste the rule above under <span className="text-white">Security &gt; WAF &gt; Custom rules</span> and place it #1.
-                    </p>
+                <button
+                  type="button"
+                  onClick={() => toggleCacheChecklistItem('respectHeaders')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    cacheChecklist.respectHeaders ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cacheChecklist.respectHeaders ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">2. Respect Existing Headers</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Set Browser Cache TTL to <span className="text-white">Respect Existing Headers</span> so our <code className="text-cyan-300 font-mono">_headers</code> rules apply.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => toggleChecklistItem('browserIntegrityOff')}
-                className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
-                  checklist.browserIntegrityOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.browserIntegrityOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
-                  <div>
-                    <div className="font-semibold text-slate-100">4. Browser Integrity &amp; Geo</div>
-                    <p className="text-[11px] text-slate-300 mt-0.5">
-                      Under <span className="text-white">Security &gt; Settings</span>, disable Browser Integrity Check and allow US/EU Google probes.
-                    </p>
+                <button
+                  type="button"
+                  onClick={() => toggleCacheChecklistItem('cacheRuleAdded')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    cacheChecklist.cacheRuleAdded ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cacheChecklist.cacheRuleAdded ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">3. Enable Cache Everything Rule</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Add the Cache Rule above &amp; delete any old Page Rules set to <span className="text-amber-300">Bypass Cache</span>.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleCacheChecklistItem('verifyHit')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    cacheChecklist.verifyHit ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cacheChecklist.verifyHit ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">4. Verify cf-cache-status: HIT</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Deploy latest build and inspect response headers on 2nd load for <code className="text-emerald-300 font-mono">cf-cache-status: HIT</code>.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* PageSpeed Insights & 403 Root Cause Diagnosis */
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-4 h-4" aria-hidden="true" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-amber-200 font-display">
+                  Why PageSpeed &amp; Search Console Showed HTTP 403 &amp; SEO 40
+                </h3>
+                <p className="text-xs text-slate-200 mt-1 leading-relaxed">
+                  Cloudflare&apos;s <strong className="text-white">&ldquo;Performing security verification&rdquo;</strong> challenge page intercepted Lighthouse and Googlebot with HTTP <code className="text-amber-300 font-mono">403</code>. Note that 403 challenge pages are never cached (causing 0 cache hits too!), inject <code className="text-amber-300 font-mono">noindex</code>, and add ~460 ms blocking time.
+                </p>
+              </div>
+            </div>
+
+            {/* Copyable Cloudflare WAF Custom Rule Expression */}
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-cyan-300">
+                  Cloudflare WAF Custom Rule Expression (Allow Search &amp; PageSpeed Bots)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(wafRuleExpression, 'waf')}
+                  className="text-xs text-cyan-300 hover:text-white flex items-center gap-1 font-mono transition-colors px-2 py-1 rounded bg-slate-900 border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
+                >
+                  {copiedId === 'waf' ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                  <span>{copiedId === 'waf' ? 'Copied' : 'Copy Rule'}</span>
+                </button>
+              </div>
+              <pre className="text-[11px] font-mono text-slate-200 overflow-x-auto p-2 rounded bg-slate-900/90 border border-slate-800">
+                {wafRuleExpression}
+              </pre>
+              <p className="text-[11px] text-slate-300">
+                In Cloudflare: <span className="text-white font-medium">Security &gt; WAF &gt; Custom rules &gt; Edit expression</span> &rarr; Action: <span className="text-emerald-300 font-semibold">Skip all remaining rules, Security Level &amp; Rate Limiting</span>.
+              </p>
+            </div>
+
+            {/* Interactive 4-Step Cloudflare Verification Checklist */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-200 font-mono tabular-nums">
+                  Cloudflare Unblock Checklist ({completedCount}/4 Completed)
+                </span>
+                {completedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetChecklist}
+                    className="text-xs text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => toggleChecklistItem('domainUrl')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    checklist.domainUrl ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.domainUrl ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">1. Inspect Production URL</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Test <code className="text-cyan-300 font-mono">https://remotfix.in/</code> directly, not staging <code className="text-slate-300 font-mono">*.run.app</code> URLs.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleChecklistItem('botFightOff')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    checklist.botFightOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.botFightOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">2. Disable Bot Fight Mode</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        In <span className="text-white">Security &gt; Bots</span>, turn OFF Bot Fight Mode so Lighthouse &amp; Googlebot aren&apos;t challenged.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleChecklistItem('wafSkipRule')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    checklist.wafSkipRule ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.wafSkipRule ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">3. Deploy WAF Skip Rule</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Paste the rule above under <span className="text-white">Security &gt; WAF &gt; Custom rules</span> and place it #1.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleChecklistItem('browserIntegrityOff')}
+                  className={`p-3 rounded-xl border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                    checklist.browserIntegrityOff ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${checklist.browserIntegrityOff ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-slate-100">4. Browser Integrity &amp; Geo</div>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Under <span className="text-white">Security &gt; Settings</span>, disable Browser Integrity Check and allow US/EU Google probes.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Code-Side Readiness Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
