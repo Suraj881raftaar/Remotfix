@@ -1,0 +1,33 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Remotfix",
+    "identifier": "did:web:remotfix.in"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:remotfix.in:docs:llms-txt",
+      "displayName": "Remotfix AI Knowledge Index (llms.txt)",
+      "type": "text/markdown",
+      "url": "https://remotfix.in/llms.txt",
+      "description": "Structured Markdown summary of Remotfix enterprise IT Annual Maintenance Contracts (workstations, network racks, dedicated servers), SLAs, and support@remotfix.in contact details.",
+      "representativeQueries": [
+        "What IT AMC services does Remotfix offer?",
+        "How do I contact Remotfix for enterprise IT support?",
+        "Does Remotfix maintain network racks and dedicated servers?"
+      ],
+      "tags": ["it-amc", "workstations", "network-racks", "dedicated-servers", "remote-it-support"]
+    },
+    {
+      "identifier": "urn:air:remotfix.in:web:sitemap",
+      "displayName": "Remotfix XML Sitemap",
+      "type": "application/xml",
+      "url": "https://remotfix.in/sitemap.xml",
+      "description": "Canonical XML sitemap listing Remotfix pages and machine-readable discovery endpoints.",
+      "representativeQueries": [
+        "List all public pages and discovery endpoints on remotfix.in"
+      ],
+      "tags": ["sitemap", "seo", "remotfix"]
+    }
+  ]
+}
