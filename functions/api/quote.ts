@@ -1,7 +1,15 @@
 export interface QuoteEnv {
   RESEND_API_KEY?: string;
+  RESEND_KEY?: string;
+  RESEND_TOKEN?: string;
+  RESEND_SECRET_KEY?: string;
+  EMAIL_API_KEY?: string;
   QUOTE_FROM_EMAIL?: string;
+  RESEND_FROM_EMAIL?: string;
+  FROM_EMAIL?: string;
   QUOTE_TO_EMAIL?: string;
+  RESEND_TO_EMAIL?: string;
+  TO_EMAIL?: string;
   TURNSTILE_SECRET_KEY?: string;
 }
 
@@ -516,8 +524,18 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
   }
 
   // 6. Verify server-side Resend credentials (never expose internals)
-  const resendApiKey = env.RESEND_API_KEY?.trim();
+  const cleanEnvVal = (val: unknown, maxLen: number): string =>
+    sanitizeSingleLine(val, maxLen).replace(/^['"]+|['"]+$/g, '').trim();
+
+  const resendApiKey =
+    cleanEnvVal(env.RESEND_API_KEY, 256) ||
+    cleanEnvVal(env.RESEND_KEY, 256) ||
+    cleanEnvVal(env.RESEND_TOKEN, 256) ||
+    cleanEnvVal(env.RESEND_SECRET_KEY, 256) ||
+    cleanEnvVal(env.EMAIL_API_KEY, 256);
+
   if (!resendApiKey) {
+    console.error('[quote] Server email delivery secret is not bound in this deployment environment.');
     return jsonResponse(
       {
         ok: false,
@@ -527,8 +545,17 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
     );
   }
 
-  const fromEmail = sanitizeSingleLine(env.QUOTE_FROM_EMAIL, 160) || 'Remotfix Support Desk <noreply@remotfix.in>';
-  const toEmail = sanitizeSingleLine(env.QUOTE_TO_EMAIL, 160) || 'support@remotfix.in';
+  const fromEmail =
+    cleanEnvVal(env.QUOTE_FROM_EMAIL, 160) ||
+    cleanEnvVal(env.RESEND_FROM_EMAIL, 160) ||
+    cleanEnvVal(env.FROM_EMAIL, 160) ||
+    'Remotfix Support Desk <noreply@remotfix.in>';
+
+  const toEmail =
+    cleanEnvVal(env.QUOTE_TO_EMAIL, 160) ||
+    cleanEnvVal(env.RESEND_TO_EMAIL, 160) ||
+    cleanEnvVal(env.TO_EMAIL, 160) ||
+    'support@remotfix.in';
 
   try {
     const resendResponse = await fetch('https://api.resend.com/emails', {
@@ -548,6 +575,7 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
     });
 
     if (!resendResponse.ok) {
+      console.error('[quote] Upstream email provider returned status:', resendResponse.status);
       return jsonResponse(
         {
           ok: false,
@@ -566,6 +594,7 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
       200
     );
   } catch {
+    console.error('[quote] Upstream email provider network failure.');
     return jsonResponse(
       {
         ok: false,
