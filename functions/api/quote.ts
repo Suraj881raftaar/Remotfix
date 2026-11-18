@@ -1,16 +1,18 @@
+export type SecretBindingValue = string | { get: () => Promise<string> };
+
 export interface QuoteEnv {
-  RESEND_API_KEY?: string;
-  RESEND_KEY?: string;
-  RESEND_TOKEN?: string;
-  RESEND_SECRET_KEY?: string;
-  EMAIL_API_KEY?: string;
-  QUOTE_FROM_EMAIL?: string;
-  RESEND_FROM_EMAIL?: string;
-  FROM_EMAIL?: string;
-  QUOTE_TO_EMAIL?: string;
-  RESEND_TO_EMAIL?: string;
-  TO_EMAIL?: string;
-  TURNSTILE_SECRET_KEY?: string;
+  RESEND_API_KEY?: SecretBindingValue;
+  RESEND_KEY?: SecretBindingValue;
+  RESEND_TOKEN?: SecretBindingValue;
+  RESEND_SECRET_KEY?: SecretBindingValue;
+  EMAIL_API_KEY?: SecretBindingValue;
+  QUOTE_FROM_EMAIL?: SecretBindingValue;
+  RESEND_FROM_EMAIL?: SecretBindingValue;
+  FROM_EMAIL?: SecretBindingValue;
+  QUOTE_TO_EMAIL?: SecretBindingValue;
+  RESEND_TO_EMAIL?: SecretBindingValue;
+  TO_EMAIL?: SecretBindingValue;
+  TURNSTILE_SECRET_KEY?: SecretBindingValue;
 }
 
 export interface PagesEventContext<Env = QuoteEnv> {
@@ -54,14 +56,57 @@ const SECURITY_JSON_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
 };
 
-function jsonResponse(body: Record<string, unknown>, status: number, extraHeaders?: Record<string, string>): Response {
+function getCorsHeaders(request?: Request): Record<string, string> {
+  const origin = request?.headers.get('Origin') || '';
+  const isAllowedOrigin =
+    origin === 'https://remotfix.in' ||
+    origin === 'https://www.remotfix.in' ||
+    /^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin);
+
+  if (!isAllowedOrigin) return {};
+
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  };
+}
+
+function jsonResponse(
+  body: Record<string, unknown>,
+  status: number,
+  extraHeaders?: Record<string, string>,
+  request?: Request
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...SECURITY_JSON_HEADERS,
+      ...getCorsHeaders(request),
       ...(extraHeaders || {}),
     },
   });
+}
+
+function cleanEnvVal(val: unknown, maxLen: number): string {
+  return sanitizeSingleLine(val, maxLen).replace(/^['"]+|['"]+$/g, '').trim();
+}
+
+async function resolveEnvString(val: unknown, maxLen: number): Promise<string> {
+  if (typeof val === 'string') {
+    return cleanEnvVal(val, maxLen);
+  }
+  if (val && typeof val === 'object' && typeof (val as { get?: unknown }).get === 'function') {
+    try {
+      const secretVal = await (val as { get: () => Promise<string> }).get();
+      return cleanEnvVal(secretVal, maxLen);
+    } catch {
+      return '';
+    }
+  }
+  return '';
 }
 
 function sanitizeSingleLine(value: unknown, maxLen: number): string {
@@ -342,15 +387,18 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
   }
 
   // 3. Optional Cloudflare Turnstile verification (enforced automatically when TURNSTILE_SECRET_KEY is configured)
-  if (env.TURNSTILE_SECRET_KEY && env.TURNSTILE_SECRET_KEY.trim().length > 0) {
+  const turnstileSecret = await resolveEnvString(env?.TURNSTILE_SECRET_KEY, 256);
+  if (turnstileSecret.length > 0) {
     const token =
       sanitizeSingleLine(payload.turnstileToken, 2048) ||
       sanitizeSingleLine(payload['cf-turnstile-response'], 2048);
-    const verified = await verifyTurnstile(env.TURNSTILE_SECRET_KEY.trim(), token, clientIp);
+    const verified = await verifyTurnstile(turnstileSecret, token, clientIp);
     if (!verified) {
       return jsonResponse(
         { ok: false, error: 'Human verification failed. Please retry your submission.' },
-        400
+        400,
+        undefined,
+        request
       );
     }
   }
@@ -524,15 +572,54 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
   }
 
   // 6. Verify server-side Resend credentials (never expose internals)
-  const cleanEnvVal = (val: unknown, maxLen: number): string =>
-    sanitizeSingleLine(val, maxLen).replace(/^['"]+|['"]+$/g, '').trim();
+  const envEntries = Object.entries((env || {}) as Record<string, unknown>);
+  const findEnvCaseInsensitive = async (candidates: string[], maxLen: number): Promise<string> => {
+    for (const candidate of candidates) {
+      const target = candidate.toLowerCase();
+      for (const [k, v] of envEntries) {
+        if (k.toLowerCase() === target) {
+          const cleaned = await resolveEnvString(v, maxLen);
+          if (cleaned) return cleaned;
+        }
+      }
+    }
+    return '';
+  };
 
-  const resendApiKey =
-    cleanEnvVal(env.RESEND_API_KEY, 256) ||
-    cleanEnvVal(env.RESEND_KEY, 256) ||
-    cleanEnvVal(env.RESEND_TOKEN, 256) ||
-    cleanEnvVal(env.RESEND_SECRET_KEY, 256) ||
-    cleanEnvVal(env.EMAIL_API_KEY, 256);
+  let resendApiKey = await findEnvCaseInsensitive(
+    [
+      'RESEND_API_KEY',
+      'RESEND_KEY',
+      'RESEND_TOKEN',
+      'RESEND_SECRET_KEY',
+      'RESEND_API',
+      'EMAIL_API_KEY',
+    ],
+    256
+  );
+
+  if (!resendApiKey) {
+    for (const [k, v] of envEntries) {
+      const upperKey = k.toUpperCase();
+      if (upperKey.includes('RESEND') && !upperKey.includes('FROM') && !upperKey.includes('TO')) {
+        const cleaned = await resolveEnvString(v, 256);
+        if (cleaned) {
+          resendApiKey = cleaned;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!resendApiKey) {
+    for (const [, v] of envEntries) {
+      const cleaned = await resolveEnvString(v, 256);
+      if (/^re_[A-Za-z0-9_]{16,}$/.test(cleaned)) {
+        resendApiKey = cleaned;
+        break;
+      }
+    }
+  }
 
   if (!resendApiKey) {
     console.error('[quote] Server email delivery secret is not bound in this deployment environment.');
@@ -541,20 +628,18 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
         ok: false,
         error: 'Automated email delivery is temporarily unavailable. Please try again later or email support@remotfix.in.',
       },
-      503
+      503,
+      undefined,
+      request
     );
   }
 
   const fromEmail =
-    cleanEnvVal(env.QUOTE_FROM_EMAIL, 160) ||
-    cleanEnvVal(env.RESEND_FROM_EMAIL, 160) ||
-    cleanEnvVal(env.FROM_EMAIL, 160) ||
+    (await findEnvCaseInsensitive(['QUOTE_FROM_EMAIL', 'RESEND_FROM_EMAIL', 'FROM_EMAIL'], 160)) ||
     'Remotfix Support Desk <noreply@remotfix.in>';
 
   const toEmail =
-    cleanEnvVal(env.QUOTE_TO_EMAIL, 160) ||
-    cleanEnvVal(env.RESEND_TO_EMAIL, 160) ||
-    cleanEnvVal(env.TO_EMAIL, 160) ||
+    (await findEnvCaseInsensitive(['QUOTE_TO_EMAIL', 'RESEND_TO_EMAIL', 'TO_EMAIL'], 160)) ||
     'support@remotfix.in';
 
   try {
@@ -581,7 +666,9 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
           ok: false,
           error: 'Unable to send your request right now. Please try again shortly.',
         },
-        502
+        502,
+        undefined,
+        request
       );
     }
 
@@ -591,7 +678,9 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
         referenceId,
         message: 'Your inquiry has been delivered to our support team at support@remotfix.in.',
       },
-      200
+      200,
+      undefined,
+      request
     );
   } catch {
     console.error('[quote] Upstream email provider network failure.');
@@ -600,19 +689,35 @@ export async function onRequestPost(context: PagesEventContext<QuoteEnv>): Promi
         ok: false,
         error: 'A network error occurred while sending your request. Please try again shortly.',
       },
-      502
+      502,
+      undefined,
+      request
     );
   }
+}
+
+export async function onRequestOptions(context: PagesEventContext<QuoteEnv>): Promise<Response> {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...getCorsHeaders(context.request),
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 export async function onRequest(context: PagesEventContext<QuoteEnv>): Promise<Response> {
   if (context.request.method === 'POST') {
     return onRequestPost(context);
   }
+  if (context.request.method === 'OPTIONS') {
+    return onRequestOptions(context);
+  }
 
   return jsonResponse(
     { ok: false, error: 'Method not allowed.' },
     405,
-    { Allow: 'POST' }
+    { Allow: 'POST, OPTIONS' },
+    context.request
   );
 }
