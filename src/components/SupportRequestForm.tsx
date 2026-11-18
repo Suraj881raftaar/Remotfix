@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle2, AlertCircle, Copy, Check, Mail, ShieldCheck } from 'lucide-react';
+import { Send, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, Loader2 } from 'lucide-react';
 import { ServiceCategory, SupportRequestDraft } from '../types';
 
 interface SupportRequestFormProps {
@@ -35,11 +35,12 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
   // Anti-spam honeypot field (must remain empty for human users)
   const [honeypot, setHoneypot] = useState('');
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [lastSubmitAt, setLastSubmitAt] = useState<number>(0);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
-  const [preparedRequest, setPreparedRequest] = useState<SupportRequestDraft | null>(null);
-  const [copiedSummary, setCopiedSummary] = useState(false);
+  const [submittedRequest, setSubmittedRequest] = useState<SupportRequestDraft | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
 
   useEffect(() => {
     setServiceCategory(defaultCategory);
@@ -54,31 +55,9 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
     return () => clearInterval(timer);
   }, [cooldownRemaining, lastSubmitAt]);
 
-  const buildSummaryText = (draft: SupportRequestDraft): string => {
-    return [
-      `Reference ID: ${draft.referenceId}`,
-      `Name: ${draft.contactName}`,
-      `Company: ${draft.companyName || 'Individual / Not Specified'}`,
-      `Email: ${draft.email}`,
-      `Phone: ${draft.phone || 'Not provided'}`,
-      `Service Category: ${draft.serviceCategory}`,
-      `Priority Level: ${draft.urgency}`,
-      '',
-      'Issue / Requirement Summary:',
-      draft.summary,
-    ].join('\n');
-  };
-
-  const buildMailtoHref = (draft: SupportRequestDraft): string => {
-    const subject = encodeURIComponent(
-      sanitizeSingleLine(`[${draft.referenceId}] ${draft.serviceCategory} - ${draft.companyName || draft.contactName}`, 120)
-    );
-    const body = encodeURIComponent(buildSummaryText(draft));
-    return `mailto:support@remotfix.in?subject=${subject}&body=${body}`;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMsg(null);
 
     // Silent drop if bot fills honeypot
@@ -90,7 +69,7 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
     if (lastSubmitAt > 0 && now - lastSubmitAt < COOLDOWN_MS) {
       const waitSec = Math.ceil((lastSubmitAt + COOLDOWN_MS - now) / 1000);
       setCooldownRemaining(waitSec);
-      setErrorMsg(`Please wait ${waitSec}s before preparing another support request.`);
+      setErrorMsg(`Please wait ${waitSec}s before sending another support request.`);
       return;
     }
 
@@ -121,37 +100,83 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
       return;
     }
 
-    const refId = `RF-${Math.floor(100000 + Math.random() * 900000)}`;
-    const draft: SupportRequestDraft = {
-      referenceId: refId,
-      contactName: cleanName,
-      companyName: cleanCompany,
-      email: cleanEmail,
-      phone: cleanPhone,
-      serviceCategory,
-      urgency,
-      summary: cleanSummary,
-      authorizedConsent: true,
-      createdAt: new Date().toISOString(),
-    };
-
-    setLastSubmitAt(now);
-    setCooldownRemaining(Math.ceil(COOLDOWN_MS / 1000));
-    setPreparedRequest(draft);
-  };
-
-  const handleCopySummary = async () => {
-    if (!preparedRequest) return;
+    setIsSubmitting(true);
     try {
-      await navigator.clipboard.writeText(buildSummaryText(preparedRequest));
-      setCopiedSummary(true);
-      setTimeout(() => setCopiedSummary(false), 2500);
+      const response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestType: 'support',
+          contactName: cleanName,
+          companyName: cleanCompany,
+          email: cleanEmail,
+          phone: cleanPhone,
+          serviceCategory,
+          urgency,
+          summary: cleanSummary,
+          authorizedConsent: true,
+          pagePath: typeof window !== 'undefined' ? window.location.pathname : '/',
+          honeypot,
+        }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        referenceId?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok) {
+        setErrorMsg(
+          data?.error ||
+            'Unable to send your request right now. Your entered details are preserved — please retry shortly.'
+        );
+        return;
+      }
+
+      const draft: SupportRequestDraft = {
+        referenceId: data.referenceId || 'RF-CONFIRMED',
+        contactName: cleanName,
+        companyName: cleanCompany,
+        email: cleanEmail,
+        phone: cleanPhone,
+        serviceCategory,
+        urgency,
+        summary: cleanSummary,
+        authorizedConsent: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      setLastSubmitAt(Date.now());
+      setCooldownRemaining(Math.ceil(COOLDOWN_MS / 1000));
+      setSubmittedRequest(draft);
     } catch {
-      setErrorMsg('Clipboard access is blocked in this browser. Please use the email button instead.');
+      setErrorMsg(
+        'Network error while contacting our support desk. Your entered details are preserved — please check your connection and try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (preparedRequest) {
+  const handleCopyRef = async () => {
+    if (!submittedRequest) return;
+    try {
+      await navigator.clipboard.writeText(submittedRequest.referenceId);
+      setCopiedRef(true);
+      setTimeout(() => setCopiedRef(false), 2500);
+    } catch {
+      setErrorMsg('Clipboard access is blocked in this browser.');
+    }
+  };
+
+  const handleReset = () => {
+    setSubmittedRequest(null);
+    setErrorMsg(null);
+    setSummary('');
+  };
+
+  if (submittedRequest) {
     return (
       <div
         className="glass-panel rounded-2xl p-6 sm:p-8 border border-emerald-500/40 space-y-5 text-left"
@@ -164,52 +189,45 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-bold text-white font-display">
-              Support Request Prepared ({preparedRequest.referenceId})
+              Request Sent to Remotfix Support ({submittedRequest.referenceId})
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
-              Your details are validated and kept private in memory (not stored in public browser caches). Send the pre-filled email below directly to{' '}
-              <span className="font-mono text-cyan-300">support@remotfix.in</span> to open your support ticket.
+              Your inquiry has been delivered directly to{' '}
+              <span className="font-mono text-cyan-300">support@remotfix.in</span>. Please keep your reference code handy for follow-ups.
             </p>
           </div>
         </div>
 
         <div className="rounded-xl bg-slate-950/75 border border-slate-800 p-4 text-xs text-slate-200 space-y-1.5 font-mono">
           <div>
-            <span className="text-slate-400">Contact:</span> {preparedRequest.contactName} ({preparedRequest.email})
+            <span className="text-slate-400">Reference:</span> {submittedRequest.referenceId}
           </div>
           <div>
-            <span className="text-slate-400">Category:</span> {preparedRequest.serviceCategory} · {preparedRequest.urgency}
+            <span className="text-slate-400">Contact:</span> {submittedRequest.contactName} ({submittedRequest.email})
+          </div>
+          <div>
+            <span className="text-slate-400">Category:</span> {submittedRequest.serviceCategory} · {submittedRequest.urgency}
           </div>
           <div className="pt-1 text-slate-300 font-sans whitespace-pre-wrap break-words">
-            {preparedRequest.summary}
+            {submittedRequest.summary}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <a
-            href={buildMailtoHref(preparedRequest)}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition-colors flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-          >
-            <Mail className="w-4 h-4" aria-hidden="true" />
-            <span>Send to support@remotfix.in</span>
-          </a>
           <button
             type="button"
-            onClick={handleCopySummary}
+            onClick={handleCopyRef}
             className="min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-medium border border-slate-700 transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
           >
-            {copiedSummary ? <Check className="w-4 h-4 text-emerald-400" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
-            <span>{copiedSummary ? 'Copied Summary' : 'Copy Details'}</span>
+            {copiedRef ? <Check className="w-4 h-4 text-emerald-400" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
+            <span>{copiedRef ? 'Copied Reference ID' : 'Copy Reference ID'}</span>
           </button>
           <button
             type="button"
-            onClick={() => {
-              setPreparedRequest(null);
-              setErrorMsg(null);
-            }}
-            className="min-h-[44px] px-4 py-2.5 rounded-xl text-slate-300 hover:text-white text-xs underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+            onClick={handleReset}
+            className="min-h-[44px] px-4 py-2.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-200 text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
           >
-            Edit or Submit Another
+            Submit Another Request
           </button>
         </div>
       </div>
@@ -416,15 +434,24 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
 
       <button
         type="submit"
-        disabled={cooldownRemaining > 0}
+        disabled={isSubmitting || cooldownRemaining > 0}
         className="w-full min-h-[46px] px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-60 text-slate-950 font-bold text-sm transition-colors shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
       >
-        <Send className="w-4 h-4" aria-hidden="true" />
-        <span>
-          {cooldownRemaining > 0
-            ? `Wait ${cooldownRemaining}s before new request`
-            : 'Prepare Support Request for support@remotfix.in'}
-        </span>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+            <span>Sending Request&hellip;</span>
+          </>
+        ) : (
+          <>
+            <Send className="w-4 h-4" aria-hidden="true" />
+            <span>
+              {cooldownRemaining > 0
+                ? `Wait ${cooldownRemaining}s before new request`
+                : 'Submit Support Request'}
+            </span>
+          </>
+        )}
       </button>
     </form>
   );

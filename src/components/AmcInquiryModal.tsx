@@ -11,8 +11,10 @@ import {
   Network,
   ArrowRight,
   Copy,
+  Check,
   AlertCircle,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 
 interface AmcInquiryModalProps {
@@ -27,6 +29,10 @@ function sanitizeLine(val: string, maxLen: number): string {
   return val.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLen);
 }
 
+function sanitizeMultiline(val: string, maxLen: number): string {
+  return val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, maxLen);
+}
+
 export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClose }) => {
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
@@ -39,6 +45,7 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [honeypot, setHoneypot] = useState('');
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [referenceId, setReferenceId] = useState('');
@@ -57,26 +64,9 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
-  const buildMailtoHref = (ref: string) => {
-    const cleanCompany = sanitizeLine(companyName, 100);
-    const cleanContact = sanitizeLine(contactName, 80);
-    const cleanEmail = sanitizeLine(email, 120);
-    const cleanPhone = sanitizeLine(phone, 24);
-    const cleanNotes = additionalNotes.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, 800);
-
-    const subject = encodeURIComponent(`IT AMC Inquiry [${ref}]: ${cleanCompany || cleanContact}`);
-    const body = encodeURIComponent(
-      `Hello Remotfix Support Team,\n\nI would like to request an IT AMC proposal:\n\nReference ID: ${ref}\nCompany: ${cleanCompany}\nContact: ${cleanContact}\nEmail: ${cleanEmail}\nPhone: ${cleanPhone || 'Not provided'}\n\nEstimated Asset Scope:\n- Workstations / Laptops: ${workstations}\n- Network Racks / Switches: ${networkRacks}\n- Servers / NAS: ${servers}\n- Preferred Support Window: ${
-        serviceTier === 'extended_priority'
-          ? 'Priority Agreement (Extended Hours / Scheduled Escalation)'
-          : 'Standard Business Hours Coverage'
-      }\n\nNotes: ${cleanNotes || 'N/A'}\n`
-    );
-    return `mailto:support@remotfix.in?subject=${subject}&body=${body}`;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMsg(null);
 
     if (honeypot.trim().length > 0) return;
@@ -85,6 +75,7 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
     const cleanContact = sanitizeLine(contactName, 80);
     const cleanEmail = sanitizeLine(email, 120).toLowerCase();
     const cleanPhone = sanitizeLine(phone, 24);
+    const cleanNotes = sanitizeMultiline(additionalNotes, 800);
 
     if (cleanCompany.length < 2) {
       setErrorMsg('Please enter your company or organization name.');
@@ -103,9 +94,50 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
       return;
     }
 
-    const newRefId = `AMC-${Math.floor(100000 + Math.random() * 900000)}`;
-    setReferenceId(newRefId);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestType: 'amc',
+          companyName: cleanCompany,
+          contactName: cleanContact,
+          email: cleanEmail,
+          phone: cleanPhone,
+          workstations,
+          networkRacks,
+          servers,
+          serviceTier,
+          additionalNotes: cleanNotes,
+          pagePath: typeof window !== 'undefined' ? window.location.pathname : '/',
+          honeypot,
+        }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        referenceId?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok) {
+        setErrorMsg(
+          data?.error ||
+            'Unable to submit your AMC request right now. Your entered details are preserved — please retry shortly.'
+        );
+        return;
+      }
+
+      setReferenceId(data.referenceId || 'AMC-CONFIRMED');
+      setIsSubmitted(true);
+    } catch {
+      setErrorMsg(
+        'Network error while submitting your AMC inquiry. Your entered details are preserved — please check your connection and try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCopyRef = async () => {
@@ -116,6 +148,13 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
     } catch {
       setErrorMsg('Clipboard access is restricted in this browser.');
     }
+  };
+
+  const handleSubmitAnother = () => {
+    setIsSubmitted(false);
+    setErrorMsg(null);
+    setReferenceId('');
+    setAdditionalNotes('');
   };
 
   return (
@@ -173,10 +212,11 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white font-display">AMC Request Summary Ready</h3>
+              <h3 className="text-xl font-bold text-white font-display">AMC Request Delivered</h3>
               <p className="text-sm text-slate-300 max-w-md mx-auto">
-                Click the email button below to send your infrastructure scope directly to{' '}
-                <span className="font-mono text-cyan-300">support@remotfix.in</span>. No sensitive customer data is persisted in browser storage.
+                Your infrastructure scope has been sent directly to{' '}
+                <span className="font-mono text-cyan-300">support@remotfix.in</span>. Our team will review your asset requirements and follow up at{' '}
+                <span className="font-mono text-slate-200">{email}</span>.
               </p>
             </div>
 
@@ -190,25 +230,29 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
                 onClick={handleCopyRef}
                 className="min-h-[40px] flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                {copiedRef ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                )}
                 <span>{copiedRef ? 'Copied' : 'Copy Code'}</span>
               </button>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <a
-                href={buildMailtoHref(referenceId)}
-                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition-colors shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              <button
+                type="button"
+                onClick={handleSubmitAnother}
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-200 font-semibold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
               >
-                <Mail className="w-4 h-4" aria-hidden="true" />
-                <span>Send Email to support@remotfix.in</span>
-              </a>
+                Submit Another Inquiry
+              </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm transition-colors border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 cursor-pointer"
               >
-                Close
+                Done
               </button>
             </div>
           </div>
@@ -229,6 +273,7 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
             {errorMsg && (
               <div
                 role="alert"
+                aria-live="assertive"
                 className="p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 text-xs flex items-start gap-2"
               >
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
@@ -417,7 +462,7 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
             <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs text-slate-300">
               <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" aria-hidden="true" />
               <span>
-                Proposals are scoped transparently and delivered from <strong className="text-white">support@remotfix.in</strong>.
+                Your request will be delivered automatically to <strong className="text-white">support@remotfix.in</strong>.
               </span>
             </div>
 
@@ -425,16 +470,27 @@ export const AmcInquiryModal: React.FC<AmcInquiryModalProps> = ({ isOpen, onClos
               <button
                 type="button"
                 onClick={onClose}
-                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 text-slate-200 text-sm font-medium transition-colors cursor-pointer"
+                disabled={isSubmitting}
+                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 disabled:opacity-60 text-slate-200 text-sm font-medium transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="min-h-[44px] px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition-colors shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer"
+                disabled={isSubmitting}
+                className="min-h-[44px] px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-60 text-slate-950 font-semibold text-sm transition-colors shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer"
               >
-                <span>Prepare AMC Request</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>Sending Request&hellip;</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Submit AMC Request</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </>
+                )}
               </button>
             </div>
           </form>
