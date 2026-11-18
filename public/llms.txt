@@ -1,27 +1,30 @@
 # Remotfix
 
-> Remotfix (remotfix.in) — "REMOTE IT SOLUTIONS & SUPPORT". Enterprise IT Annual Maintenance Contracts (AMC) covering corporate workstations, structured network racks, and bare-metal/cloud servers alongside encrypted 24/7 remote troubleshooting.
+> Remotfix (https://remotfix.in) — "REMOTE IT SOLUTIONS & SUPPORT". Reliable IT support for growing businesses: remote troubleshooting, desktop & laptop support, network support, server administration, cloud & backup, cybersecurity hygiene, and IT Annual Maintenance Contracts (AMC).
 
-Remotfix is launching a unified enterprise IT support and Annual Maintenance Contract platform. Businesses can request custom AMC proposals or reach our engineering desk directly at [support@remotfix.in](mailto:support@remotfix.in).
+Remotfix is actively accepting business IT support requests and AMC inquiries. Contact our support desk directly at [support@remotfix.in](mailto:support@remotfix.in).
 
-## Core Website & Services
+## Public Website & Service Pages
 
-- [Remotfix Homepage & Launch Countdown](https://remotfix.in/): Main pre-launch portal featuring company mission, live countdown timer, and early-access notification signup.
-- [Workstations & Laptops AMC](https://remotfix.in/#amc-services): Lifecycle maintenance for Windows, macOS, and Linux fleets including OS patch hygiene, thermal deep-cleaning, and anti-ransomware protection (< 15m remote SLA).
-- [Network Racks & Cabling AMC](https://remotfix.in/#amc-services): Structured Cat6A and fiber cabling, TIA-568-C rack dressing, Cisco/Fortinet/Ubiquiti firewall management, and 24/7 uplink monitoring.
-- [Dedicated Servers & Cloud AMC](https://remotfix.in/#amc-services): Bare-metal and hypervisor administration (Proxmox, VMware ESXi, Windows Server), RAID health monitoring, and immutable 3-2-1 backup verification (99.99% uptime SLA).
-- [SLA & Security Standards](https://remotfix.in/#advantages): Overview of instant remote triage, quarterly hardware/network security audits, encrypted remote tunnels, and fixed transparent pricing.
-- [Enterprise Contact Desk](https://remotfix.in/#contact): Direct engineering inquiry desk at [support@remotfix.in](mailto:support@remotfix.in) serving Bengaluru, Mumbai, Delhi-NCR, and global remote clients.
+- [Remotfix Homepage](https://remotfix.in/): Overview of IT Support, Remote IT Support, and IT AMC for growing businesses without full-time internal IT overhead.
+- [IT Services Overview](https://remotfix.in/services): Complete structure of primary offerings and secondary technical capabilities.
+- [Remote IT Support & Desktop Troubleshooting](https://remotfix.in/services/remote-it-support): Authorized remote troubleshooting and workstation maintenance for Windows, macOS, and Linux.
+- [IT Annual Maintenance Contracts (IT AMC)](https://remotfix.in/services/it-amc): Ongoing preventive maintenance and support agreements covering workstations, networks, and servers.
+- [Network, Server, Cloud Backup & Cybersecurity Support](https://remotfix.in/services/infrastructure-security): Practical network troubleshooting, server maintenance, backup verification, and endpoint security hygiene.
 
-## Machine-Readable Discovery & Sitemaps
+## Trust, Security & Policy Pages
 
-- [XML Sitemap](https://remotfix.in/sitemap.xml): Search engine sitemap indexing canonical URLs and service visual assets.
-- [Agentic Resource Discovery (ARD)](https://remotfix.in/.well-known/ard.json): Standardized JSON resource catalog for autonomous AI agents.
-- [AI Catalog Manifest](https://remotfix.in/.well-known/ai-catalog.json): Legacy-compatible ARD catalog manifest endpoint.
-- [Robots Policy](https://remotfix.in/robots.txt): Universal search engine and AI crawler access policy.
-- [Security Policy](https://remotfix.in/.well-known/security.txt): RFC 9116 security contact and vulnerability disclosure policy.
+- [About Remotfix](https://remotfix.in/about): Company mission, operating approach, and transparent business disclosures.
+- [Contact & Support Request Desk](https://remotfix.in/contact): Request remote IT troubleshooting or an IT AMC quote via [support@remotfix.in](mailto:support@remotfix.in).
+- [Remote Support Security & Session Terms](https://remotfix.in/remote-support-terms): Customer authorization model, time-limited sessions, no unnecessary password sharing, and confidentiality standards.
+- [Service Level Expectations (SLA)](https://remotfix.in/sla): Response targets, support hours, escalation path, and clear exclusions.
+- [Privacy Policy](https://remotfix.in/privacy-policy): Inquiry handling and remote session confidentiality commitments.
+- [Terms of Service](https://remotfix.in/terms): Standard terms governing support and AMC engagements.
+- [Refund & Cancellation Policy](https://remotfix.in/refund-policy): Scheduling, cancellation, and refund rules.
 
-## Optional Contact & Brand Assets
+## Machine-Readable Discovery
 
-- [Official Remotfix Logo](https://remotfix.in/assets/aistudio/1791411926566_992a226a.png): Official company logo and "REMOTE IT SOLUTIONS & SUPPORT" brand lockup.
-- [Email Support Desk](mailto:support@remotfix.in): Primary engineering and AMC quotation contact (`support@remotfix.in`).
+- [XML Sitemap](https://remotfix.in/sitemap.xml): Canonical public URL index.
+- [Agentic Resource Discovery (ARD)](https://remotfix.in/.well-known/ard.json): Standardized JSON catalog of Remotfix resources.
+- [Robots Policy](https://remotfix.in/robots.txt): Crawler directives.
+- [Security Policy](https://remotfix.in/.well-known/security.txt): RFC 9116 security contact (`support@remotfix.in`).

@@ -1,0 +1,6 @@
+https://www.remotfix.in/* https://remotfix.in/:splat 301
+http://www.remotfix.in/* https://remotfix.in/:splat 301
+https://remotfix.com/* https://remotfix.in/:splat 301
+http://remotfix.com/* https://remotfix.in/:splat 301
+https://www.remotfix.com/* https://remotfix.in/:splat 301
+http://www.remotfix.com/* https://remotfix.in/:splat 301

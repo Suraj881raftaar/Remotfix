@@ -1,7 +1,7 @@
 {
-  "name": "Remotfix — Enterprise IT AMC & Remote Infrastructure",
+  "name": "Remotfix — Remote IT Solutions & Support",
   "short_name": "Remotfix",
-  "description": "Enterprise IT AMC covering workstations, network racks, and dedicated servers with encrypted 24/7 remote diagnostic support. Contact: support@remotfix.in",
+  "description": "Reliable IT support for growing businesses: remote troubleshooting, workstation support, networking, server administration and IT AMC. Contact: support@remotfix.in",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090A0F",

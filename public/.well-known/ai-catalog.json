@@ -10,22 +10,22 @@
       "displayName": "Remotfix AI Knowledge Index (llms.txt)",
       "type": "text/markdown",
       "url": "https://remotfix.in/llms.txt",
-      "description": "Structured Markdown summary of Remotfix enterprise IT Annual Maintenance Contracts (workstations, network racks, dedicated servers), SLAs, and support@remotfix.in contact details.",
+      "description": "Structured summary of Remotfix IT support, remote troubleshooting, IT Annual Maintenance Contracts (AMC), remote session security terms, and support@remotfix.in contact details.",
       "representativeQueries": [
-        "What IT AMC services does Remotfix offer?",
-        "How do I contact Remotfix for enterprise IT support?",
-        "Does Remotfix maintain network racks and dedicated servers?"
+        "What IT support and AMC services does Remotfix offer?",
+        "How does Remotfix secure remote support sessions?",
+        "How do I contact Remotfix for business IT support?"
       ],
-      "tags": ["it-amc", "workstations", "network-racks", "dedicated-servers", "remote-it-support"]
+      "tags": ["it-support", "remote-it-support", "it-amc", "network-support", "server-support"]
     },
     {
       "identifier": "urn:air:remotfix.in:web:sitemap",
       "displayName": "Remotfix XML Sitemap",
       "type": "application/xml",
       "url": "https://remotfix.in/sitemap.xml",
-      "description": "Canonical XML sitemap listing Remotfix pages and machine-readable discovery endpoints.",
+      "description": "Canonical XML sitemap listing Remotfix public service, trust, and policy pages.",
       "representativeQueries": [
-        "List all public pages and discovery endpoints on remotfix.in"
+        "List all public pages on remotfix.in"
       ],
       "tags": ["sitemap", "seo", "remotfix"]
     }

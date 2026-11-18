@@ -1,11 +1,19 @@
-# Robots.txt for Remotfix (remotfix.in)
-# Fully optimized for universal Search Engine Crawlers & AI Search Engines
+# Robots.txt for Remotfix (https://remotfix.in)
+# Allows public service, trust, and policy pages while excluding non-SEO error/retired paths.
+# Note: Access control and HTTP 404/410 enforcement are handled at the edge, not via robots.txt.
 
 User-agent: *
 Allow: /
-Disallow:
+Disallow: /404.html
+Disallow: /403.html
+Disallow: /500.html
+Disallow: /console
+Disallow: /invite
+Disallow: /*.php$
+Disallow: /assets/aistudio/*.md
+Disallow: /assets/aistudio/Screenshot_*
 
-# Primary Global Search Engines
+# Primary Search Engines
 User-agent: Googlebot
 Allow: /
 
@@ -15,38 +23,17 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-User-agent: msnbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
-
 User-agent: DuckDuckBot
 Allow: /
 
-User-agent: Baiduspider
+User-agent: Applebot
 Allow: /
 
-User-agent: YandexBot
-Allow: /
-
-User-agent: Sogou spider
-Allow: /
-
-User-agent: SeznamBot
-Allow: /
-
-# AI Crawlers & LLM Search Agents
+# AI Discovery Crawlers
 User-agent: GPTBot
 Allow: /
 
-User-agent: ChatGPT-User
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-Web
 Allow: /
 
 User-agent: PerplexityBot
@@ -55,24 +42,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-User-agent: Applebot
-Allow: /
-
-User-agent: Applebot-Extended
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: FacebookBot
-Allow: /
-
-User-agent: meta-externalagent
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-# Canonical Host & Sitemaps
-Host: https://remotfix.in
 Sitemap: https://remotfix.in/sitemap.xml
