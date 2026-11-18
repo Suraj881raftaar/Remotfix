@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, Loader2 } from 'lucide-react';
 import { ServiceCategory, SupportRequestDraft } from '../types';
 
@@ -41,6 +41,7 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const [submittedRequest, setSubmittedRequest] = useState<SupportRequestDraft | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
+  const errorAlertRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setServiceCategory(defaultCategory);
@@ -54,6 +55,11 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
     }, 500);
     return () => clearInterval(timer);
   }, [cooldownRemaining, lastSubmitAt]);
+
+  useEffect(() => {
+    if (!errorMsg) return;
+    errorAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [errorMsg]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,30 +246,21 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
       noValidate
       className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-700/70 space-y-4 text-left"
     >
-      {/* Hidden Honeypot Anti-Spam Field */}
-      <div className="sr-only" aria-hidden="true">
-        <label htmlFor="rf-company-website">Leave this field blank</label>
+      {/* Hidden Honeypot Anti-Spam Field (no name/company keywords to prevent mobile autofill) */}
+      <div className="sr-only pointer-events-none" aria-hidden="true">
+        <label htmlFor="rf-aux-guard">Leave blank</label>
         <input
-          id="rf-company-website"
-          name="companyWebsite"
+          id="rf-aux-guard"
           type="text"
           tabIndex={-1}
-          autoComplete="off"
+          autoComplete="new-password"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-bwignore="true"
           value={honeypot}
           onChange={(e) => setHoneypot(e.target.value)}
         />
       </div>
-
-      {errorMsg && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 text-xs sm:text-sm flex items-start gap-2.5"
-        >
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -431,6 +428,18 @@ export const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           . Remote sessions require explicit authorization when scheduled.
         </label>
       </div>
+
+      {errorMsg && (
+        <div
+          ref={errorAlertRef}
+          role="alert"
+          aria-live="assertive"
+          className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 text-xs sm:text-sm flex items-start gap-2.5"
+        >
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       <button
         type="submit"
